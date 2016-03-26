@@ -1,0 +1,83 @@
+object TableForm: TTableForm
+  Left = 1082
+  Height = 600
+  Top = 343
+  Width = 800
+  Caption = 'TableForm'
+  ClientHeight = 600
+  ClientWidth = 800
+  Constraints.MaxHeight = 600
+  Constraints.MaxWidth = 800
+  Constraints.MinHeight = 600
+  Constraints.MinWidth = 800
+  OnCreate = FormCreate
+  LCLVersion = '1.4.4.0'
+  object ScrollBox1: TScrollBox
+    Left = 152
+    Height = 200
+    Top = 400
+    Width = 648
+    HorzScrollBar.Page = 1
+    VertScrollBar.Page = 1
+    TabOrder = 2
+  end
+  object ControlPanel: TPanel
+    Left = 0
+    Height = 600
+    Top = 0
+    Width = 152
+    Align = alLeft
+    Caption = '0'
+    ClientHeight = 600
+    ClientWidth = 152
+    TabOrder = 1
+    object AddFilterBtn: TSpeedButton
+      Left = 8
+      Height = 57
+      Top = 408
+      Width = 135
+      Caption = 'Add Filter'
+      OnClick = AddFilterBtnClick
+    end
+    object ClearFiltersBtn: TSpeedButton
+      Left = 8
+      Height = 57
+      Top = 472
+      Width = 135
+      Caption = 'Clear Filters'
+      OnClick = ClearFiltersBtnClick
+    end
+    object ApplyBtn: TSpeedButton
+      Left = 8
+      Height = 57
+      Top = 536
+      Width = 135
+      Caption = 'Apply'
+      Enabled = False
+      OnClick = ApplyBtnClick
+    end
+  end
+  object DBGrid1: TDBGrid
+    Left = 0
+    Height = 400
+    Top = 0
+    Width = 800
+    Color = clWindow
+    Columns = <>
+    DataSource = DataSource1
+    TabOrder = 0
+  end
+  object SQLQuery1: TSQLQuery
+    FieldDefs = <>
+    Database = DataModule1.IBConnection1
+    Transaction = DataModule1.SQLTransaction1
+    Params = <>
+    left = 23
+    top = 23
+  end
+  object DataSource1: TDataSource
+    DataSet = SQLQuery1
+    left = 64
+    top = 23
+  end
+end

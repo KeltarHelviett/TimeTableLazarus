@@ -1,0 +1,31 @@
+object Main: TMain
+  Left = 1124
+  Height = 240
+  Top = 231
+  Width = 320
+  Caption = 'TimeTable'
+  Menu = MainMenu1
+  OnCreate = FormCreate
+  LCLVersion = '1.4.4.0'
+  object MainMenu1: TMainMenu
+    left = 73
+    top = 75
+    object MFile: TMenuItem
+      Caption = 'File'
+      object MFileExit: TMenuItem
+        Caption = 'Exit'
+        OnClick = MFileExitClick
+      end
+    end
+    object MTables: TMenuItem
+      Caption = 'Tables'
+    end
+    object MHelp: TMenuItem
+      Caption = 'Help'
+      object MHelpAbout: TMenuItem
+        Caption = 'About'
+        OnClick = MHelpAboutClick
+      end
+    end
+  end
+end
