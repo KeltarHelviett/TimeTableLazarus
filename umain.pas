@@ -52,7 +52,7 @@ begin
   newForm.Caption := (Sender as TMenuItem).Caption;
   newForm.Tag := (Sender as TMenuItem).Tag;
   newForm.ShowDefaultTable;
-  newForm.SQLQuery1.Active := True;
+
   newForm.Show;
 end;
 

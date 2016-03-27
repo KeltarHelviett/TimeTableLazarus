@@ -23,7 +23,7 @@ type
     ScrollBox1: TScrollBox;
     SQLQuery1: TSQLQuery;
     procedure AddFilterBtnClick(Sender: TObject);
-    procedure AdjustColumnNames(var ATable: TTable);
+    procedure AdjustColumnNames;
     procedure AdjustColumnSize;
     procedure ApplyBtnClick(Sender: TObject);
     procedure ClearFiltersBtnClick(Sender: TObject);
@@ -47,13 +47,31 @@ implementation
 
 { TTableForm }
 
-procedure TTableForm.AdjustColumnNames(var ATable: TTable);
+procedure TTableForm.AdjustColumnNames;
 var
-  i: integer;
+  i, j, k, index, num: integer;
 begin
-  for i := 0 to DBGrid1.Columns.Count - 1 do
+  k := 0;
+  for i := 0 to High(MetaData.FTables[Self.Tag].FFields) do
     begin
-      DBGrid1.Columns[i].Title.Caption := ATable.FFields[i].FDisplayName;
+      if MetaData.FTables[Self.Tag].FFields[i].FRefTableName = '' then
+        begin
+          DBGrid1.Columns[k].Title.Caption :=
+            MetaData.FTables[Self.Tag].FFields[i].FDisplayName;
+          Inc(k);
+        end
+      else
+        begin
+          index :=
+            SearchTableByName(MetaData.FTables[Self.Tag].FFields[i].FRefTableName);
+          if index = Self.Tag then Continue;
+          for j := 1 to High(MetaData.FTables[index].FFields) do
+            begin
+              DBGrid1.Columns[k].Title.Caption :=
+                MetaData.FTables[index].FFields[j].FDisplayName;
+              Inc(k);
+            end;
+        end;
     end;
 end;
 
@@ -64,7 +82,6 @@ var
   p: TPoint;
   FieldsStr: array of string;
   s: string;
-  sl: TStringList;
 begin
   if Length(Filters) > 0 then
     begin
@@ -76,8 +93,6 @@ begin
       p.x := 0;
       p.y := 0;
     end;
-  sl := TStringList.Create;
-  sl.Clear;
   s := BuildSelectPart(Self.Tag);
   for i := 0 to High(MetaData.FTables[Self.Tag].FFields) do
     begin
@@ -94,8 +109,6 @@ begin
                   begin
                     SetLength(FieldsStr, Length(FieldsStr) + 1);
                     FieldsStr[High(FieldsStr)] := MetaData.FTables[j].FFields[k].FDisplayName;
-                    sl.Add(FieldsStr[High(FieldsStr)]);
-                    //ShowMessage(MetaData.FTables[j].FFields[k].FDisplayName);
                   end;
 
               end;
@@ -105,17 +118,14 @@ begin
         begin
           SetLength(FieldsStr, Length(FieldsStr) + 1 );
           FieldsStr[High(FieldsStr)] := MetaData.FTables[Self.Tag].FFields[i].FDisplayName;
-          sl.Add(MetaData.FTables[Self.Tag].FFields[i].FDisplayName);
-          //ShowMessage(MetaData.FTables[Self.Tag].FFields[i].FDisplayName);
         end;
     end;
-  sl.SaveToFile('f.txt');
-  f := TFilter.Create(p, ScrollBox1, FieldsStr);
+  SetLength(Filters, Length(Filters) + 1);
+  f := TFilter.Create(p, ScrollBox1, FieldsStr, High(Filters));
   f.FFields.OnChange := @OnFilterChange;
   f.FValue.OnChange := @OnFilterChange;
   f.FOperations.OnChange := @OnFilterChange;
   f.FDeleteBtn.OnMouseUp := @OnDeleteBtnUp;
-  SetLength(Filters, Length(Filters) + 1);
   Filters[High(Filters)] := f;
 end;
 
@@ -123,9 +133,10 @@ procedure TTableForm.AdjustColumnSize;
 var
   i: integer;
 begin
-  for i := 0 to DBGrid1.Columns.Count - 1 do
+  DBGrid1.Columns[0].Width := 20;
+  for i := 1 to DBGrid1.Columns.Count - 1 do
     begin
-      DBGrid1.Columns[i].Width := 200;
+      DBGrid1.Columns[i].Width := 180;
     end;
 end;
 
@@ -134,28 +145,11 @@ var
   i, j: integer;
   s: string;
 begin
-  ShowMessage(BuildSelectPart(self.Tag));
   try
   SQLQuery1.Close;
   SQLQuery1.SQL.Clear;
   s := BuildSelectPart(Self.Tag);
-  s += ' WHERE ';
-  for i := 0 to High(Filters) do
-    begin
-      if (i > 0) then
-         s +=' AND ';
-      for j := 0 to High(MetaData.FTables[Self.Tag].FFields) do
-        begin
-          if (MetaData.FTables[Self.Tag].FFields[j].FDisplayName =
-              Filters[i].FFields.Text)
-          then
-          begin
-            s += ' ' + MetaData.FTables[Self.Tag].FFields[j].FRealName;
-            s += ' ' + Filters[i].FOperations.Text + ':p' + IntToStr(i);
-            Break;
-          end;
-        end;
-    end;
+  s += PrepareWherePart(Self.Tag, Filters);
   SQLQuery1.SQL.Text := s;
   SQLQuery1.Prepare;
   for i := 0 to High(Filters) do
@@ -163,7 +157,7 @@ begin
       SQLQuery1.Params[i].AsString := Filters[i].FValue.Text;
     end;
   SQLQuery1.Open;
-  AdjustColumnNames(MetaData.FTables[Self.Tag]);
+  AdjustColumnNames();
   AdjustColumnSize;
   ApplyBtn.Enabled := False;
   except
@@ -203,18 +197,18 @@ begin
   SQLQuery1.Close;
   SQLQuery1.SQL.Text := BuildSelectPart(Self.Tag);
   SQLQuery1.Open;
- // AdjustColumnNames(MetaData.FTables[Self.Tag]);
+  AdjustColumnNames();
   AdjustColumnSize;
 end;
 
 procedure TTableForm.OnDeleteBtnUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 var
-  i: integer;
+  i, tg: integer;
 begin
-  for i := (Sender as TBitBtn).Tag to High(Filters) - 1 do
+  tg := (Sender as TBitBtn).Tag;
+  for i := tg to High(Filters) - 1 do
     begin
-      Filters[i].FDeleteBtn.Tag := Filters[i + 1].FDeleteBtn.Tag;
       Filters[i].FFields.ItemIndex := Filters[i + 1].FFields.ItemIndex;
       Filters[i].FOperations.ItemIndex := Filters[i + 1].FOperations.ItemIndex;
       Filters[i].FValue.Text := Filters[i + 1].FValue.Text;

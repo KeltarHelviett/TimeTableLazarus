@@ -5,11 +5,12 @@ unit UQueryBuild;
 interface
 
 uses
-  Classes, SysUtils, UMetaData, UFilter;
+  Classes, SysUtils, UMetaData, UFilter, Dialogs;
 
 function BuildSelectPart(ATableTag: integer): string;
 function PutTableFields(ATableName: string): string;
-function BuildWherePart(ATableTag: integer; AFilters: array of TFilter): string;
+function PrepareWherePart(ATableTag: integer; AFilters: array of TFilter): string;
+function SearchTableByName(ATableName: string): integer;
 
 implementation
 
@@ -48,7 +49,6 @@ begin
     end;
   sl := TStringList.Create;
   sl.Text := Result;
-  sl.SaveToFile('output.txt');
 end;
 
 function PutTableFields(ATableName: string): string;
@@ -67,11 +67,14 @@ begin
     end;
 end;
 
-function BuildWherePart(ATableTag: integer; AFilters: array of TFilter): string;
+function PrepareWherePart(ATableTag: integer; AFilters: array of TFilter
+  ): string;
 var
-  i, j: integer;
+  i, j, k: integer;
+  index: integer;
 begin
-  Result := ' WHERE ';
+  if Length(AFilters) > 0 then
+    Result := ' WHERE ';
   for i := 0 to High(AFilters) do
     begin
       if (i > 0) then
@@ -81,13 +84,43 @@ begin
           if (MetaData.FTables[ATableTag].FFields[j].FDisplayName =
               AFilters[i].FFields.Text)
           then
-          begin
-            Result += ' ' + MetaData.FTables[ATableTag].FFields[j].FRealName;
-            Result += ' ' + AFilters[i].FOperations.Text + ':p' + IntToStr(i);
-            Break;
-          end;
+            begin
+              Result += ' ' + MetaData.FTables[ATableTag].FRealName;
+              Result += '.' + MetaData.FTables[ATableTag].FFields[j].FRealName;
+              Result += ' ' + AFilters[i].FOperations.Text + ':p' + IntToStr(i);
+              Break;
+            end;
+          if MetaData.FTables[ATableTag].FFields[j].FRefTableName <> '' then
+            begin
+              index := SearchTableByName(
+                MetaData.FTables[ATableTag].FFields[j].FRefTableName);
+              for k := 0 to High(MetaData.FTables[index].FFields) do
+                begin
+                  if (MetaData.FTables[index].FFields[k].FDisplayName =
+                     AFilters[i].FFields.Text)
+                  then
+                    begin
+                      Result += ' ' + MetaData.FTables[index].FRealName + '.';
+                      Result += MetaData.FTables[index].FFields[k].FRealName;
+                      Result += ' ' + AFilters[i].FOperations.Text + ':p';
+                      Result += IntToStr(i);
+                    end;
+                end;
+            end;
         end;
     end;
+end;
+
+function SearchTableByName(ATableName: string): integer;
+var
+  i: integer;
+begin
+  for i := 0 to High(MetaData.FTables) do
+    if MetaData.FTables[i].FRealName = ATableName then
+      begin
+        Exit(i);
+      end;
+  Result := -1;
 end;
 
 end.

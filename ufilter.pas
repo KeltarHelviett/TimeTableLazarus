@@ -63,7 +63,7 @@ begin
  FDeleteBtn.Top := APosition.y;
  FDeleteBtn.Caption := 'Delete';
  FDeleteBtn.Parent := AParent;
- FDeleteBtn.Tag := ;
+ FDeleteBtn.Tag := ATag;
 end;
 
 destructor TFilter.Free;
