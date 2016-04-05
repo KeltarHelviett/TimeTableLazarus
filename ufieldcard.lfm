@@ -1,0 +1,52 @@
+object CardForm: TCardForm
+  Left = 1079
+  Height = 433
+  Top = 185
+  Width = 436
+  Caption = 'CardForm'
+  ClientHeight = 433
+  ClientWidth = 436
+  OnCloseQuery = FormCloseQuery
+  OnDeactivate = FormDeactivate
+  LCLVersion = '1.4.4.0'
+  object SaveCloseBtn: TBitBtn
+    Left = 40
+    Height = 30
+    Top = 377
+    Width = 91
+    Caption = 'Save and Close'
+    OnClick = SaveCloseBtnClick
+    TabOrder = 0
+  end
+  object SaveBtn: TBitBtn
+    Left = 144
+    Height = 30
+    Top = 377
+    Width = 75
+    Caption = 'Save'
+    OnClick = SaveBtnClick
+    TabOrder = 1
+  end
+  object CloseBtn: TBitBtn
+    Left = 232
+    Height = 30
+    Top = 377
+    Width = 75
+    Caption = 'Close'
+    OnClick = CloseBtnClick
+    TabOrder = 2
+  end
+  object CardDataSource: TDataSource
+    DataSet = CardSQLQuery
+    left = 304
+    top = 34
+  end
+  object CardSQLQuery: TSQLQuery
+    FieldDefs = <>
+    Database = DataModule1.IBConnection1
+    Transaction = DataModule1.SQLTransaction1
+    Params = <>
+    left = 392
+    top = 34
+  end
+end

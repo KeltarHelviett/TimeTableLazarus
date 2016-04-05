@@ -10,7 +10,10 @@ uses
 function BuildSelectPart(ATableTag: integer): string;
 function PutTableFields(ATableName: string): string;
 function PrepareWherePart(ATableTag: integer; AFilters: array of TFilter): string;
-function SearchTableByName(ATableName: string): integer;
+//function SearchTableByName(ATableName: string): integer;
+function DeleteFieldFromQuery(AField, AQuery: string): string;
+function PrepareInsertPart(ATableTag: integer): string;
+function PrepareUpdatePart(ATableTag, Aid: integer): string;
 
 implementation
 
@@ -19,7 +22,6 @@ var
   i: integer;
   tables: array of string;
   fields: array of string;
-  sl: TStringList;
 begin
   Result := ' SELECT ';
   for i := 0 to High(MetaData.FTables[ATableTag].FFields) do
@@ -45,10 +47,8 @@ begin
     begin
       Result += ' INNER JOIN ' + tables[i] + ' ON ' + tables[i] + '.' + fields[i];
       Result += ' = '  + MetaData.FTables[ATableTag].FRealName +  '.' +
-                MetaData.FTables[ATableTag].FFields[i + 1].FRealName;
+        MetaData.FTables[ATableTag].FFields[i + 1].FRealName;
     end;
-  sl := TStringList.Create;
-  sl.Text := Result;
 end;
 
 function PutTableFields(ATableName: string): string;
@@ -61,8 +61,8 @@ begin
       if MetaData.FTables[i].FRealName = ATableName then
          for j := 1 to High(MetaData.FTables[i].FFields) do
            begin
-             Result += ' ' + MetaData.FTables[i].FRealName + '.'
-                       + MetaData.FTables[i].FFields[j].FRealName + ', ';
+             Result += ' ' + MetaData.FTables[i].FRealName + '.' +
+               MetaData.FTables[i].FFields[j].FRealName + ', ';
            end;
     end;
 end;
@@ -92,8 +92,9 @@ begin
             end;
           if MetaData.FTables[ATableTag].FFields[j].FRefTableName <> '' then
             begin
-              index := SearchTableByName(
-                MetaData.FTables[ATableTag].FFields[j].FRefTableName);
+              index := MetaData.FTables[ATableTag].FFields[j].FRefTableInd;
+              //SearchTableByName(
+              //  MetaData.FTables[ATableTag].FFields[j].FRefTableName);
               for k := 0 to High(MetaData.FTables[index].FFields) do
                 begin
                   if (MetaData.FTables[index].FFields[k].FDisplayName =
@@ -111,7 +112,7 @@ begin
     end;
 end;
 
-function SearchTableByName(ATableName: string): integer;
+{function SearchTableByName(ATableName: string): integer;
 var
   i: integer;
 begin
@@ -121,6 +122,51 @@ begin
         Exit(i);
       end;
   Result := -1;
+end; }
+
+function DeleteFieldFromQuery(AField, AQuery: string): string;
+var
+  s: string;
+  i, j, k: integer;
+begin
+  s := '';
+  i := Pos(AField , AQuery);
+  j := i + 1;
+  while (AQuery[i] <> ' ') do
+    begin
+      AQuery[i] := ' ';
+      Dec(i);
+    end;
+  while (AQuery[j] <> ',') and (AQuery[j] <> ' ') do
+    begin
+      AQuery[j] := ' ';
+      Inc(j);
+    end;
+  AQuery[j] := ' ';
+  Result := AQuery;
+end;
+
+function PrepareInsertPart(ATableTag: integer): string;
+var
+  i: integer;
+begin
+  Result := 'INSERT INTO ' + MetaData.FTables[ATableTag].FRealName + ' VALUES(0,';
+  for i := 1 to High(MetaData.FTables[ATableTag].FFields) do
+    Result += ':p' + IntToStr(i) + ' ,';
+  Delete(Result, Length(Result), 1);
+  Result += ')';
+end;
+
+function PrepareUpdatePart(ATableTag, Aid: integer): string;
+var
+  i: integer;
+begin
+  Result := 'UPDATE ' + MetaData.FTables[ATableTag].FRealName + ' SET ';
+  for i := 1 to High(MetaData.FTables[ATableTag].FFields) do
+    Result +=  MetaData.FTables[ATableTag].FFields[i].FRealName + ' = :p'
+      + IntToStr(i) + ', ';
+  Delete(Result, Length(Result) - 1, 1);
+  Result += ' WHERE id = ' + IntToStr(Aid);
 end;
 
 end.

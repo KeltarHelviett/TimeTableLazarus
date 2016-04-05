@@ -38,11 +38,13 @@ begin
  FFields.Items.AddStrings(AFields);
  FFields.Width := 160;
  FFields.Parent := AParent;
+ FFields.Style := csDropDownList;
  FFields.ItemIndex := 0;
  APosition.x += FFields.Width + 10;
  FOperations := TComboBox.Create(AParent);
  FOperations.Left := APosition.x;
  FOperations.Top := APosition.y;
+ FOperations.Style := csDropDownList;
  FOperations.Parent := AParent;
  for i := 0 to High(Operations) do
    begin

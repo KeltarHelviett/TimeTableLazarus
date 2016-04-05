@@ -6,14 +6,17 @@ interface
 
 uses
   Classes, SysUtils, sqldb, db, FileUtil, DBDateTimePicker, Forms, Controls,
-  Graphics, Dialogs, DBGrids, ExtCtrls, Buttons, UMetaData, StdCtrls, UQueryBuild,
-  UFilter;
+  Graphics, Dialogs, DBGrids, ExtCtrls, Buttons, UMetaData, StdCtrls, DbCtrls,
+  UQueryBuild, UFilter, UFieldCard, UNotification;
 
 type
 
   { TTableForm }
 
   TTableForm = class(TForm)
+    AddRecordBtn: TBitBtn;
+    EditRecordBrn: TBitBtn;
+    DeleteRecordBtn: TBitBtn;
     DataSource1: TDataSource;
     DBGrid1: TDBGrid;
     ControlPanel: TPanel;
@@ -23,14 +26,21 @@ type
     ScrollBox1: TScrollBox;
     SQLQuery1: TSQLQuery;
     procedure AddFilterBtnClick(Sender: TObject);
+    procedure AddRecordBtnClick(Sender: TObject);
     procedure AdjustColumnNames;
     procedure AdjustColumnSize;
     procedure ApplyBtnClick(Sender: TObject);
     procedure ClearFiltersBtnClick(Sender: TObject);
+    procedure DBGrid1DblClick(Sender: TObject);
+    procedure DBNavigator1Click(Sender: TObject; Button: TDBNavButtonType);
+    procedure DeleteRecordBtnClick(Sender: TObject);
+    procedure EditRecordBrnClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure OnFilterChange(Sender: TObject);
+    procedure ScrollBox1Click(Sender: TObject);
     procedure ShowDefaultTable;
     procedure OnDeleteBtnUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure EditOnKeyPress(Sender: TObject; var Key: char);
   private
     { private declarations }
   public
@@ -62,9 +72,7 @@ begin
         end
       else
         begin
-          index :=
-            SearchTableByName(MetaData.FTables[Self.Tag].FFields[i].FRefTableName);
-          if index = Self.Tag then Continue;
+          index := MetaData.FTables[Self.Tag].FFields[i].FRefTableInd;
           for j := 1 to High(MetaData.FTables[index].FFields) do
             begin
               DBGrid1.Columns[k].Title.Caption :=
@@ -126,8 +134,21 @@ begin
   f.FValue.OnChange := @OnFilterChange;
   f.FOperations.OnChange := @OnFilterChange;
   f.FDeleteBtn.OnMouseUp := @OnDeleteBtnUp;
+  f.FValue.OnKeyPress := @EditOnKeyPress;
   Filters[High(Filters)] := f;
+  ApplyBtn.Enabled := True;
+  ClearFiltersBtn.Enabled := True;
 end;
+
+procedure TTableForm.AddRecordBtnClick(Sender: TObject);
+var
+  newForm: TCardForm;
+begin
+  newForm := TCardForm.Create(TableForm, 0, Self.Tag);
+  Self.Enabled := False;
+  newForm.Show;
+end;
+
 
 procedure TTableForm.AdjustColumnSize;
 var
@@ -167,6 +188,7 @@ begin
       ShowDefaultTable;
     end;
   end;
+  Self.Enabled := True;
 end;
 
 procedure TTableForm.ClearFiltersBtnClick(Sender: TObject);
@@ -182,14 +204,61 @@ begin
   SetLength(Filters, 0);
 end;
 
+procedure TTableForm.DBGrid1DblClick(Sender: TObject);
+begin
+  EditRecordBrn.Click;
+end;
+
+procedure TTableForm.DBNavigator1Click(Sender: TObject; Button: TDBNavButtonType
+  );
+begin
+  if (Button = nbInsert) then
+    ShowMessage('Hello world!');
+end;
+
+procedure TTableForm.DeleteRecordBtnClick(Sender: TObject);
+var
+  btn, ind: integer;
+  s: string;
+begin
+  ind := DBGrid1.DataSource.DataSet.Fields.Fields[0].AsInteger;
+  btn := MessageDlg('Delete record?', mtCustom, [mbYes, mbNo], 0);
+  if btn = mrYes then
+    begin
+      SQLQuery1.Close;
+      s := 'DELETE FROM ' + MetaData.FTables[Self.Tag].FRealName;
+      s += ' WHERE id = ' + IntToStr(ind);
+      SQLQuery1.SQL.Text := s;
+      SQLQuery1.ExecSQL;
+      ShowDefaultTable;
+    end;
+end;
+
+procedure TTableForm.EditRecordBrnClick(Sender: TObject);
+var
+  newForm: TCardForm;
+  ind: integer;
+begin
+  ind := DBGrid1.DataSource.DataSet.Fields.Fields[0].AsInteger;
+  newForm := TCardForm.Create(Self, ind, Self.Tag);
+  Self.Enabled := False;
+  newForm.Show;
+end;
+
 procedure TTableForm.FormCreate(Sender: TObject);
 begin
-
+  Notifier.Subscribe(ApplyBtn.OnClick);
 end;
 
 procedure TTableForm.OnFilterChange(Sender: TObject);
 begin
   ApplyBtn.Enabled := True;
+  ClearFiltersBtn.Enabled := True;
+end;
+
+procedure TTableForm.ScrollBox1Click(Sender: TObject);
+begin
+
 end;
 
 procedure TTableForm.ShowDefaultTable;
@@ -216,6 +285,12 @@ begin
   Filters[High(Filters)].Free;
   SetLength(Filters, Length(Filters) - 1);
   ApplyBtn.Enabled := True;
+end;
+
+procedure TTableForm.EditOnKeyPress(Sender: TObject; var Key: char);
+begin
+  if (Key = #13) and (ApplyBtn.Enabled) then
+    ApplyBtn.Click;
 end;
 
 end.
