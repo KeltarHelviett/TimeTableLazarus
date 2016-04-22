@@ -1,7 +1,7 @@
 object Main: TMain
-  Left = 698
+  Left = 1532
   Height = 240
-  Top = 209
+  Top = 83
   Width = 320
   Caption = 'TimeTable'
   Menu = MainMenu1
@@ -16,6 +16,10 @@ object Main: TMain
         Caption = 'Exit'
         OnClick = MFileExitClick
       end
+    end
+    object MTimeTable: TMenuItem
+      Caption = 'Timetable'
+      OnClick = MTimeTableClick
     end
     object MTables: TMenuItem
       Caption = 'Tables'

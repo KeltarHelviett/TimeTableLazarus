@@ -8,7 +8,7 @@ uses
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
   Forms, datetimectrls, UMain, UDirectory, UDB, UMetaData, UQueryBuild, UFilter,
-  UFieldCard, UNotification
+  UFieldCard, UNotification, UTimeTable
   { you can add units after this };
 
 {$R *.res}
@@ -20,6 +20,7 @@ begin
   Application.CreateForm(TTableForm, TableForm);
   Application.CreateForm(TDataModule1, DataModule1);
   Application.CreateForm(TCardForm, CardForm);
+  Application.CreateForm(TTimeTableForm, TimeTableForm);
   Application.Run;
 end.
 

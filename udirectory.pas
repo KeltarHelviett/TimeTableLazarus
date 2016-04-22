@@ -42,15 +42,16 @@ type
     procedure OnDeleteBtnUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure EditOnKeyPress(Sender: TObject; var Key: char);
   private
-    { private declarations }
+    FOpenCardID: integer;
+    Filters: array of TFilter;
+    FWhereCondition: string;
   public
+    constructor Create(AOwner: TComponent; AWhereCondition: string);
     { public declarations }
   end;
 
 var
   TableForm: TTableForm;
-  Filters: array of TFilter;
-
 implementation
 
 {$R *.lfm}
@@ -145,7 +146,6 @@ var
   newForm: TCardForm;
 begin
   newForm := TCardForm.Create(TableForm, 0, Self.Tag);
-  Self.Enabled := False;
   newForm.Show;
 end;
 
@@ -188,7 +188,11 @@ begin
       ShowDefaultTable;
     end;
   end;
-  Self.Enabled := True;
+  DBGrid1.DataSource.DataSet.First;
+  if (FOpenCardID <> -1) then
+    while (DBGrid1.DataSource.DataSet.Fields.Fields[0].Value <> FOpenCardID)
+          and (not DBGrid1.DataSource.DataSet.EOF) do
+      DBGrid1.DataSource.DataSet.Next;
 end;
 
 procedure TTableForm.ClearFiltersBtnClick(Sender: TObject);
@@ -237,17 +241,20 @@ end;
 procedure TTableForm.EditRecordBrnClick(Sender: TObject);
 var
   newForm: TCardForm;
-  ind: integer;
 begin
-  ind := DBGrid1.DataSource.DataSet.Fields.Fields[0].AsInteger;
-  newForm := TCardForm.Create(Self, ind, Self.Tag);
-  Self.Enabled := False;
-  newForm.Show;
+  FOpenCardID := DBGrid1.DataSource.DataSet.Fields.Fields[0].AsInteger;
+  if not (Notifier.isCardOpened(Self.Tag, FOpenCardID)) then
+    begin;
+      newForm := TCardForm.Create(Self, FOpenCardID, Self.Tag);
+      Notifier.RegisterCard(Self.Tag, FOpenCardID, @newForm.BringCardToFront);
+      newForm.Show;
+    end;
 end;
 
 procedure TTableForm.FormCreate(Sender: TObject);
 begin
   Notifier.Subscribe(ApplyBtn.OnClick);
+  FOpenCardID := -1;
 end;
 
 procedure TTableForm.OnFilterChange(Sender: TObject);
@@ -264,7 +271,7 @@ end;
 procedure TTableForm.ShowDefaultTable;
 begin
   SQLQuery1.Close;
-  SQLQuery1.SQL.Text := BuildSelectPart(Self.Tag);
+  SQLQuery1.SQL.Text := BuildSelectPart(Self.Tag) + FWhereCondition;
   SQLQuery1.Open;
   AdjustColumnNames();
   AdjustColumnSize;
@@ -291,6 +298,15 @@ procedure TTableForm.EditOnKeyPress(Sender: TObject; var Key: char);
 begin
   if (Key = #13) and (ApplyBtn.Enabled) then
     ApplyBtn.Click;
+end;
+
+constructor TTableForm.Create(AOwner: TComponent; AWhereCondition: string);
+begin
+  inherited Create(AOwner);
+  SQLQuery1.SQL.Text := BuildSelectPart(High(MetaData.FTables)) + AWhereCondition;
+  FWhereCondition := AWhereCondition;
+  Self.Tag := High(MetaData.FTables);
+  SQLQuery1.Open;
 end;
 
 end.

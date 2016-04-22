@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, Menus,
-  UMetaData, UDirectory;
+  UMetaData, UDirectory, UDB, UTimeTable;
 
 type
 
@@ -14,17 +14,18 @@ type
 
   TMain = class(TForm)
     MainMenu1: TMainMenu;
+    MTimeTable: TMenuItem;
     MHelpAbout: TMenuItem;
     MHelp: TMenuItem;
     MFile: TMenuItem;
     MTables: TMenuItem;
     MFileExit: TMenuItem;
     procedure FormCreate(Sender: TObject);
+    procedure MTimeTableClick(Sender: TObject);
     procedure MFileExitClick(Sender: TObject);
     procedure MHelpAboutClick(Sender: TObject);
     procedure MTablesItemClick(Sender: TObject);
   private
-    { private declarations }
   public
     { public declarations }
   end;
@@ -48,7 +49,7 @@ procedure TMain.MTablesItemClick(Sender: TObject);
 var
   newForm: TTableForm;
 begin
-  newForm := TTableForm.Create(Main);
+  newForm := TTableForm.Create(Main, '');
   newForm.Caption := (Sender as TMenuItem).Caption;
   newForm.Tag := (Sender as TMenuItem).Tag;
   newForm.ShowDefaultTable;
@@ -74,6 +75,15 @@ begin
       m.OnClick := @MTablesItemClick;
       MTables.Add(m);
     end;
+end;
+
+procedure TMain.MTimeTableClick(Sender: TObject);
+var
+  f: TTimeTableForm;
+  i: integer;
+begin
+  f := TTimeTableForm.Create(Self);
+  f.Show;
 end;
 
 end.

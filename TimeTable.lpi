@@ -42,7 +42,7 @@
         <PackageName Value="LCL"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="9">
+    <Units Count="10">
       <Unit0>
         <Filename Value="TimeTable.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -99,6 +99,14 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="UNotification"/>
       </Unit8>
+      <Unit9>
+        <Filename Value="utimetable.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="TimeTableForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UTimeTable"/>
+      </Unit9>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

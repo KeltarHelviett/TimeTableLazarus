@@ -9,38 +9,87 @@ uses
 
 type
 
-  { TNotification }
+  TCard = record
+    FTableTag: integer;
+    FCardId: integer;
+    FBringToFront: TNotifyEvent;
+  end;
 
-  TNotification = class
+  { TNotifier }
+
+  TNotifier = class
     procedure Subscribe(AMethod: TNotifyEvent);
     procedure Update;
+    function isCardOpened(ATableTag, ACardId: Integer): Boolean;
+    procedure CloseCard(ATableTag, ACardId: Integer);
+    procedure RegisterCard(ATableTag, ACardId: Integer; ABringCardToFront: TNotifyEvent);
     private
-      Subscibers: array of TNotifyEvent;
+      FSubscibers: array of TNotifyEvent;
+      FOpenedCards: array of TCard;
   end;
 var
-  Notifier: TNotification;
+  Notifier: TNotifier;
 
 implementation
 
 
 
-{ TNotification }
+{ TNotifier }
 
-procedure TNotification.Subscribe(AMethod: TNotifyEvent);
+procedure TNotifier.Subscribe(AMethod: TNotifyEvent);
 begin
-  SetLength(Subscibers, Length(Subscibers) + 1);
-  Subscibers[High(Subscibers)] := AMethod;
+  SetLength(FSubscibers, Length(FSubscibers) + 1);
+  FSubscibers[High(FSubscibers)] := AMethod;
 end;
 
-procedure TNotification.Update;
+procedure TNotifier.Update;
 var
   i: integer;
 begin
-  for i := 0 to High(Subscibers) do
-    Subscibers[i](nil);
+  for i := 0 to High(FSubscibers) do
+    FSubscibers[i](nil);
+end;
+
+function TNotifier.isCardOpened(ATableTag, ACardId: Integer): Boolean;
+var
+  i: integer;
+begin
+  Result := False;
+  for i := 0 to High(FOpenedCards) do
+    if (FOpenedCards[i].FCardId = ACardId) and
+       (FOpenedCards[i].FTableTag = ATableTag) then
+       begin
+         FOpenedCards[i].FBringToFront(nil);
+         Result := True;
+         Break;
+       end;
+end;
+
+procedure TNotifier.CloseCard(ATableTag, ACardId: Integer);
+var
+  i, j: integer;
+begin
+  for i := 0 to High(FOpenedCards) do
+    if (FOpenedCards[i].FTableTag = ATableTag) and
+       (FOpenedCards[i].FCardId = ACardId) then
+          for j := i + 1 to High(FOpenedCards) do
+            FOpenedCards[j - 1] := FOpenedCards[j];
+  SetLength(FOpenedCards, Length(FOpenedCards) - 1);
+end;
+
+procedure TNotifier.RegisterCard(ATableTag, ACardId: Integer;
+  ABringCardToFront: TNotifyEvent);
+begin
+  SetLength(FOpenedCards, Length(FOpenedCards) + 1);
+  with FOpenedCards[High(FOpenedCards)] do
+    begin
+      FTableTag := ATableTag;
+      FCardId := ACardId;
+      FBringToFront := ABringCardToFront;
+    end;
 end;
 
 initialization
-  Notifier := TNotification.Create;
+  Notifier := TNotifier.Create;
 end.
 

@@ -44,6 +44,7 @@ type
     FCardMode: (cmAdd, cmEdit);
   public
     procedure CreateArrayOfIds;
+    procedure BringCardToFront(Sender: TObject);
     { public declarations }
   end;
 
@@ -65,7 +66,7 @@ var
   c: TAssociativeComboBox;
   p: TPoint;
 begin
-  p.x := 0;
+  p.x := 10;
   p.y := 0;
   for i := 1 to High(MetaData.FTables[Self.Tag].FFields) do
     begin
@@ -81,7 +82,7 @@ begin
           e.Parent := Self;
           e.Left := l.Width + 100;
           e.Top := p.y;
-          e.Width := 100;
+          e.Width := 200;
           p.y += 30;
           SetLength(FLabels, Length(FLabels) + 1);
           FLabels[High(FLabels)] := l;
@@ -146,8 +147,7 @@ begin
   while not CardSQLQuery.EOF do
     begin
       SetLength(AComboBox.FIndexes, Length(AComboBox.FIndexes) + 1);
-      AComboBox.FIndexes[i] :=
-        CardSQLQuery.FieldByName(CardSQLQuery.FieldDefs.Items[0].DisplayName).Value;
+      AComboBox.FIndexes[i] := CardSQLQuery.Fields[0].AsInteger;
       AComboBox.FComboBox.AddItem(
         CardSQLQuery.FieldByName(CardSQLQuery.FieldDefs.Items[1].DisplayName).Value, nil);
       CardSQLQuery.Next;
@@ -164,17 +164,11 @@ begin
   Self.Tag := ATag;
   id := Aid;
   CardSQLQuery.SQL.Text := GetCardRecordQuery();
-  CardSQLQuery.SQL.SaveToFile('SQL.txt');
   if Aid = 0 then
-    begin
-      SetAddMode;
-      CreateAddCard;
-    end
+    SetAddMode
   else
-    begin
     FCardMode := cmEdit;
     CreateAddCard;
-    end;
 end;
 
 procedure TCardForm.FormCloseQuery(Sender: TObject; var CanClose: boolean);
@@ -190,6 +184,7 @@ begin
   for i := 0 to High(FComboBoxes) do
     FComboBoxes[i].FComboBox.Free;
   SetLength(FComboBoxes, 0);
+  Notifier.CloseCard(Self.Tag, id);
   Notifier.Update;
 end;
 
@@ -214,8 +209,7 @@ begin
     begin
       if MetaData.FTables[Self.Tag].FFields[i].FRefTableName = '' then
         begin
-          CardSQLQuery.Params[i - 1].AsString :=
-            FEdits[j].Text;
+          CardSQLQuery.Params[i - 1].AsString := FEdits[j].Text;
           Inc(j);
         end
       else
@@ -237,7 +231,7 @@ var
   s: string;
 begin
   SaveBtn.Click;
-  Self.Close;
+  CloseBtn.Click;
 end;
 
 procedure TCardForm.SetAddMode;
@@ -282,21 +276,27 @@ begin
 
 end;
 
+procedure TCardForm.BringCardToFront(Sender: TObject);
+begin
+  Self.Show;
+end;
+
 function TCardForm.GetCardRecordQuery: string;
 var
-  i, j, ind: integer;
+  i, j: integer;
+  t, rt: TTable;
 begin
   Result := DeleteFieldFromQuery('id', BuildSelectPart(Self.Tag));
-  for i := 1 to High(MetaData.FTables[Self.Tag].FFields) do
-    if MetaData.FTables[Self.Tag].FFields[i].FRefTableName <> '' then
+  t := MetaData.FTables[Self.Tag];
+  for i := 1 to High(t.FFields) do
+    if t.FFields[i].FRefTableName <> '' then
       begin
-        ind := MetaData.FTables[Self.Tag].FFields[i].FRefTableInd;
-        for j := 1 to High(MetaData.FTables[ind].FFields) do
-          if not MetaData.FTables[ind].FFields[j].FPermittedToShow then
-            Result := DeleteFieldFromQuery(MetaData.FTables[ind].FFields[j].FRealName,
-              Result);
+        rt := MetaData.FTables[t.FFields[i].FRefTableInd];
+        for j := 1 to High(rt.FFields) do
+          if not rt.FFields[j].FPermittedToShow then
+            Result := DeleteFieldFromQuery(rt.FFields[j].FRealName, Result);
       end;
-  Result += ' WHERE ' + MetaData.FTables[Self.Tag].FRealName + '.id = ' + IntToStr(id);
+  Result += ' WHERE ' + t.FRealName + '.id = ' + IntToStr(id);
 end;
 
 end.
