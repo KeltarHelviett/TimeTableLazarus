@@ -1,31 +1,14 @@
 object TimeTableForm: TTimeTableForm
-  Left = 893
-  Height = 607
-  Top = 189
-  Width = 913
+  Left = 396
+  Height = 893
+  Top = 40
+  Width = 1564
   Caption = 'TimeTableForm'
-  ClientHeight = 607
-  ClientWidth = 913
+  ClientHeight = 893
+  ClientWidth = 1564
   OnCreate = FormCreate
   OnResize = FormResize
   LCLVersion = '1.4.4.0'
-  object DrawGrid: TDrawGrid
-    Left = 0
-    Height = 475
-    Top = 136
-    Width = 913
-    ColCount = 0
-    DefaultColWidth = 200
-    DefaultRowHeight = 200
-    ExtendedSelect = False
-    FixedCols = 0
-    FixedRows = 0
-    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goRowSizing, goColSizing, goSmoothScroll, goFixedColSizing]
-    RowCount = 0
-    TabOrder = 0
-    OnDblClick = DrawGridDblClick
-    OnDrawCell = DrawGridDrawCell
-  end
   object LeftHeadersBox: TComboBox
     Left = 24
     Height = 23
@@ -33,7 +16,7 @@ object TimeTableForm: TTimeTableForm
     Width = 100
     ItemHeight = 15
     Style = csDropDownList
-    TabOrder = 1
+    TabOrder = 0
   end
   object TopHeadersBox: TComboBox
     Left = 208
@@ -42,7 +25,7 @@ object TimeTableForm: TTimeTableForm
     Width = 100
     ItemHeight = 15
     Style = csDropDownList
-    TabOrder = 2
+    TabOrder = 1
   end
   object ApplyBtn: TBitBtn
     Left = 128
@@ -51,6 +34,20 @@ object TimeTableForm: TTimeTableForm
     Width = 75
     Caption = 'Apply'
     OnClick = ApplyBtnClick
+    TabOrder = 2
+  end
+  object DrawGrid: TDrawGrid
+    Left = 0
+    Height = 756
+    Top = 136
+    Width = 1568
+    ColCount = 2
+    DefaultColWidth = 120
+    DefaultRowHeight = 120
+    ExtendedSelect = False
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goRowSizing, goColSizing, goSmoothScroll]
+    ScrollBars = ssBoth
     TabOrder = 3
+    OnDrawCell = DrawGridDrawCell
   end
 end

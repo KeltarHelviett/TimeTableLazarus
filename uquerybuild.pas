@@ -14,6 +14,8 @@ function PrepareWherePart(ATableTag: integer; AFilters: array of TFilter): strin
 function DeleteFieldFromQuery(AField, AQuery: string): string;
 function PrepareInsertPart(ATableTag: integer): string;
 function PrepareUpdatePart(ATableTag, Aid: integer): string;
+function BuildDrawGridCellQuery(ATopTabeTag, ALeftTableTag, ATopHeaderId,
+  ALeftHeaderID: integer): string;
 
 implementation
 
@@ -167,6 +169,18 @@ begin
       + IntToStr(i) + ', ';
   Delete(Result, Length(Result) - 1, 1);
   Result += ' WHERE id = ' + IntToStr(Aid);
+end;
+
+function BuildDrawGridCellQuery(ATopTabeTag, ALeftTableTag, ATopHeaderId,
+  ALeftHeaderID: integer): string;
+begin
+  Result := BuildSelectPart(High(MetaData.FTables));
+  Result += Format(
+    ' where %s.id = %d and %s.id = %d ',
+    [
+      MetaData.FTables[ATopTabeTag].FRealName, ATopHeaderId,
+      MetaData.FTables[ALeftTableTag].FRealName, ALeftHeaderID
+    ]);
 end;
 
 end.
