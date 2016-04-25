@@ -23,10 +23,20 @@ type
 
   TTimeTableForm = class(TForm)
     ApplyBtn: TBitBtn;
+    ApplyFiltersBtn: TBitBtn;
+    AddFilterBtn: TBitBtn;
+    ClearFiltersBtn: TBitBtn;
     DrawGrid: TDrawGrid;
+    ScrollBox1: TScrollBox;
+    TopHeadersLabel: TLabel;
+    LeftHeadersLabel: TLabel;
     LeftHeadersBox: TComboBox;
     TopHeadersBox: TComboBox;
+    procedure AddFilterBtnClick(Sender: TObject);
     procedure ApplyBtnClick(Sender: TObject);
+    procedure ApplyFiltersBtnClick(Sender: TObject);
+    procedure ClearFiltersBtnClick(Sender: TObject);
+    procedure DrawGridDblClick(Sender: TObject);
     procedure DrawGridDrawCell(Sender: TObject; aCol, aRow: Integer;
       aRect: TRect; aState: TGridDrawState);
     procedure FormCreate(Sender: TObject);
@@ -37,6 +47,10 @@ type
     FLeftHeaders: THeaders;
     FHeadersBrushColor: TColor;
     FHeightDelta: integer;
+    FCurLeftTable: string;
+    FCurTopTable: string;
+    FFilterList: TFilterList;
+    FFiltersCondition: string;
   public
     function GetHeaders(ATableTag: integer): THeaders;
     procedure GetCellValues;
@@ -60,10 +74,11 @@ begin
       LeftHeadersBox.AddItem(MetaData.FTables[i].FDisplayName, TObject(i));
       TopHeadersBox.AddItem(MetaData.FTables[i].FDisplayName, TObject(i));
     end;
-  LeftHeadersBox.ItemIndex := 0;
-  TopHeadersBox.ItemIndex := 0;
+  LeftHeadersBox.ItemIndex := 4;
+  TopHeadersBox.ItemIndex := 1;
   FHeadersBrushColor := RGBToColor(153, 51, 255);
   FHeightDelta := Self.Height - DrawGrid.Height;
+  FFilterList := TFilterList.Create;
   ApplyBtn.Click;
 end;
 
@@ -74,6 +89,10 @@ begin
 end;
 
 procedure TTimeTableForm.ApplyBtnClick(Sender: TObject);
+function HeaderTable(ACb: TComboBox): String;
+  begin
+      Result := MetaData.FTables[Integer(ACb.Items.Objects[ACb.ItemIndex])].FRealName;
+  end;
 var
   i, j, k, l, m, n: integer;
 begin
@@ -81,7 +100,53 @@ begin
   FTopHeaders := GetHeaders(TopHeadersBox.ItemIndex);
   DrawGrid.RowCount := Length(FLeftHeaders) + 1;
   DrawGrid.ColCount := Length(FTopHeaders) + 1;
+  FCurTopTable := HeaderTable(TopHeadersBox);
+  FCurLeftTable := HeaderTable(LeftHeadersBox);
   GetCellValues;
+end;
+
+procedure TTimeTableForm.ApplyFiltersBtnClick(Sender: TObject);
+var
+  q: TSQLQuery;
+  i: integer;
+begin
+  FFiltersCondition := PrepareWherePart(High(MetaData.FTables), FFilterList.FFilters, ' ');
+  ApplyBtn.Click;
+  DrawGrid.Invalidate;
+  ApplyFiltersBtn.Enabled := False;
+end;
+
+procedure TTimeTableForm.ClearFiltersBtnClick(Sender: TObject);
+begin
+  FFilterList.ClearFilters;
+  FFiltersCondition := '';
+  ApplyFiltersBtn.Click;
+end;
+
+procedure TTimeTableForm.AddFilterBtnClick(Sender: TObject);
+var
+  i, j, k: integer;
+  f: TFilter;
+  p: TPoint;
+  FieldsStr: array of string;
+  s: string;
+begin
+  FFilterList.AddFilter(ScrollBox1, High(MetaData.FTables));
+  ApplyBtn.Enabled := True;
+end;
+
+procedure TTimeTableForm.DrawGridDblClick(Sender: TObject);
+var
+  t: TTableForm;
+begin
+  if (DrawGrid.Col <> 0) and (DrawGrid.Row <> 0) then
+  begin
+    t := TTableForm.Create(Self,
+    BuildDrawGridCellQuery(FCurTopTable, FCurLeftTable,
+      FTopHeaders[DrawGrid.Col - 1].FID, FLeftHeaders[DrawGrid.Row - 1].FID)
+      + FFiltersCondition);
+    t.Show;
+  end;
 end;
 
 procedure TTimeTableForm.DrawGridDrawCell(Sender: TObject; aCol, aRow: Integer;
@@ -117,9 +182,10 @@ begin
         begin
           for j := 0 to High(FCellValues[aCol - 1, aRow - 1, i]) do
             begin
-              aRect.Top += 15;
-              DrawGrid.Canvas.TextOut(aRect.Left, aRect.Top,
+              aRect.Top += 1;
+              DrawGrid.Canvas.TextOut(aRect.Left + 5, aRect.Top,
                 FCellValues[aCol - 1, aRow - 1, i, j]);
+              aRect.Top += 14;
             end;
           aRect.Top += 45;
         end;
@@ -162,16 +228,12 @@ begin
 end;
 
 procedure TTimeTableForm.GetCellValues;
-  function HeaderTable(ACb: TComboBox): String;
-  begin
-      Result := MetaData.FTables[Integer(ACb.Items.Objects[ACb.ItemIndex])].FRealName;
-  end;
 var
   q: TSQLQuery;
   i, j, k, l, m, n, lr: integer;
   s: String;
-  a: array of array of string;
 begin
+  try
   SetLength(FCellValues, 0);
   q := TSQLQuery.Create(Self);
   q.DataBase := DataModule1.IBConnection1;
@@ -181,20 +243,20 @@ begin
   for i := 0 to High(FTopHeaders) do
     for j := 0 to High(FLeftHeaders) do
       begin
+        q.SQL.Clear;
         s := BuildSelectPart(High(MetaData.FTables));
-        s += Format(
-    ' where %s.id = %d and %s.id = %d',
-    [
-      HeaderTable(TopHeadersBox), FTopHeaders[i].FID,
-      HeaderTable(LeftHeadersBox), FLeftHeaders[j].FID
-    ]);
-        q.SQL.SaveToFile('SQL.txt');
+        s += BuildDrawGridCellQuery(FCurTopTable, FCurLeftTable,
+          FTopHeaders[i].FID, FLeftHeaders[j].FID);
+        s += FFiltersCondition;
         q.SQL.Text := s;
+        q.SQL.SaveToFile('SQL.txt');
+        q.Prepare;
+        for k := 0 to High(FFilterList.FFilters) do
+          q.Params[k].AsString := FFilterList.FFilters[k].FValue.Text;
         q.Open;
-
         while not(q.EOF) do
           begin
-            SetLength(FCellValues[i, j], Length(FCellValues[i, j]) + 1);
+             SetLength(FCellValues[i, j], Length(FCellValues[i, j]) + 1);
             lr := High(FCellValues[i, j]);
             SetLength(FCellValues[i, j, lr], q.FieldDefs.Count);
             for k := 0 to q.FieldDefs.Count - 1 do
@@ -208,6 +270,9 @@ begin
         q.Close;
       end;
   q.Free;
+  except
+    on EVariantError do ShowMessage('Poor filter content');
+  end;
 end;
 
 end.

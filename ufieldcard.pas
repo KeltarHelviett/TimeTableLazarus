@@ -184,7 +184,8 @@ begin
   for i := 0 to High(FComboBoxes) do
     FComboBoxes[i].FComboBox.Free;
   SetLength(FComboBoxes, 0);
-  Notifier.CloseCard(Self.Tag, id);
+  if FCardMode = cmEdit then
+    Notifier.CloseCard(Self.Tag, id);
   Notifier.Update;
 end;
 

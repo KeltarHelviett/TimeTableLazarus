@@ -5,16 +5,16 @@ unit UQueryBuild;
 interface
 
 uses
-  Classes, SysUtils, UMetaData, UFilter, Dialogs;
+  Classes, SysUtils, UMetaData, UFilter, Dialogs, StdCtrls;
 
 function BuildSelectPart(ATableTag: integer): string;
 function PutTableFields(ATableName: string): string;
-function PrepareWherePart(ATableTag: integer; AFilters: array of TFilter): string;
+function PrepareWherePart(ATableTag: integer; AFilters: array of TFilter; AWhereCondition: string): string;
 //function SearchTableByName(ATableName: string): integer;
 function DeleteFieldFromQuery(AField, AQuery: string): string;
 function PrepareInsertPart(ATableTag: integer): string;
 function PrepareUpdatePart(ATableTag, Aid: integer): string;
-function BuildDrawGridCellQuery(ATopTabeTag, ALeftTableTag, ATopHeaderId,
+function BuildDrawGridCellQuery(ATopCB, ALeftCB: String; ATopHeaderID,
   ALeftHeaderID: integer): string;
 
 implementation
@@ -69,17 +69,17 @@ begin
     end;
 end;
 
-function PrepareWherePart(ATableTag: integer; AFilters: array of TFilter
-  ): string;
+function PrepareWherePart(ATableTag: integer; AFilters: array of TFilter;
+  AWhereCondition: string): string;
 var
   i, j, k: integer;
   index: integer;
 begin
-  if Length(AFilters) > 0 then
+  if (Length(AFilters) > 0) and (AWhereCondition = '') then
     Result := ' WHERE ';
   for i := 0 to High(AFilters) do
     begin
-      if (i > 0) then
+      if (i > 0) or (AWhereCondition <> '')then
         Result +=' AND ';
       for j := 0 to High(MetaData.FTables[ATableTag].FFields) do
         begin
@@ -171,15 +171,15 @@ begin
   Result += ' WHERE id = ' + IntToStr(Aid);
 end;
 
-function BuildDrawGridCellQuery(ATopTabeTag, ALeftTableTag, ATopHeaderId,
+function BuildDrawGridCellQuery(ATopCB, ALeftCB: string; ATopHeaderID,
   ALeftHeaderID: integer): string;
+
 begin
-  Result := BuildSelectPart(High(MetaData.FTables));
-  Result += Format(
+  Result := Format(
     ' where %s.id = %d and %s.id = %d ',
     [
-      MetaData.FTables[ATopTabeTag].FRealName, ATopHeaderId,
-      MetaData.FTables[ALeftTableTag].FRealName, ALeftHeaderID
+      ATopCB, ATopHeaderID,
+      ALeftCB, ALeftHeaderID
     ]);
 end;
 

@@ -1,11 +1,15 @@
 object CardForm: TCardForm
-  Left = 1107
-  Height = 433
-  Top = 217
-  Width = 436
+  Left = 1084
+  Height = 450
+  Top = 409
+  Width = 450
   Caption = 'CardForm'
-  ClientHeight = 433
-  ClientWidth = 436
+  ClientHeight = 450
+  ClientWidth = 450
+  Constraints.MaxHeight = 450
+  Constraints.MaxWidth = 450
+  Constraints.MinHeight = 450
+  Constraints.MinWidth = 450
   OnCloseQuery = FormCloseQuery
   OnDeactivate = FormDeactivate
   LCLVersion = '1.4.4.0'

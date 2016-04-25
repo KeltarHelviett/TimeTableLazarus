@@ -1,10 +1,10 @@
 object TimeTableForm: TTimeTableForm
-  Left = 396
-  Height = 893
-  Top = 40
+  Left = 58
+  Height = 905
+  Top = 165
   Width = 1564
   Caption = 'TimeTableForm'
-  ClientHeight = 893
+  ClientHeight = 905
   ClientWidth = 1564
   OnCreate = FormCreate
   OnResize = FormResize
@@ -38,16 +38,69 @@ object TimeTableForm: TTimeTableForm
   end
   object DrawGrid: TDrawGrid
     Left = 0
-    Height = 756
-    Top = 136
+    Height = 732
+    Top = 160
     Width = 1568
     ColCount = 2
-    DefaultColWidth = 120
-    DefaultRowHeight = 120
+    DefaultColWidth = 150
+    DefaultRowHeight = 200
     ExtendedSelect = False
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goRowSizing, goColSizing, goSmoothScroll]
     ScrollBars = ssBoth
     TabOrder = 3
+    OnDblClick = DrawGridDblClick
     OnDrawCell = DrawGridDrawCell
+  end
+  object LeftHeadersLabel: TLabel
+    Left = 40
+    Height = 15
+    Top = 29
+    Width = 66
+    Caption = 'Left Headers'
+    ParentColor = False
+  end
+  object TopHeadersLabel: TLabel
+    Left = 224
+    Height = 15
+    Top = 29
+    Width = 66
+    Caption = 'Top Headers'
+    ParentColor = False
+  end
+  object ScrollBox1: TScrollBox
+    Left = 472
+    Height = 120
+    Top = 40
+    Width = 704
+    HorzScrollBar.Page = 1
+    VertScrollBar.Page = 1
+    TabOrder = 4
+  end
+  object ApplyFiltersBtn: TBitBtn
+    Left = 1216
+    Height = 30
+    Top = 120
+    Width = 75
+    Caption = 'Apply Filters'
+    OnClick = ApplyFiltersBtnClick
+    TabOrder = 5
+  end
+  object AddFilterBtn: TBitBtn
+    Left = 1216
+    Height = 30
+    Top = 40
+    Width = 75
+    Caption = 'Add Filter'
+    OnClick = AddFilterBtnClick
+    TabOrder = 6
+  end
+  object ClearFiltersBtn: TBitBtn
+    Left = 1216
+    Height = 30
+    Top = 80
+    Width = 75
+    Caption = 'Clear Filters'
+    OnClick = ClearFiltersBtnClick
+    TabOrder = 7
   end
 end
