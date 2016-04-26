@@ -49,9 +49,8 @@ procedure TMain.MTablesItemClick(Sender: TObject);
 var
   newForm: TTableForm;
 begin
-  newForm := TTableForm.Create(Main, '');
+  newForm := TTableForm.Create(Main, (Sender as TMenuItem).Tag);
   newForm.Caption := (Sender as TMenuItem).Caption;
-  newForm.Tag := (Sender as TMenuItem).Tag;
   newForm.ShowDefaultTable;
 
   newForm.Show;

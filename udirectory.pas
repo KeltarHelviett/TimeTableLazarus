@@ -46,7 +46,9 @@ type
     Filters: TFilterList;
     FWhereCondition: string;
   public
-    constructor Create(AOwner: TComponent; AWhereCondition: string);
+    constructor Create(AOwner: TComponent; AWhereCondition: string;
+      AFilterList: TFilterList);
+    constructor Create(AOwner: TComponent; ATag: integer);
     { public declarations }
   end;
 
@@ -85,20 +87,8 @@ begin
 end;
 
 procedure TTableForm.AddFilterBtnClick(Sender: TObject);
-var
-  i, j, k: integer;
-  f: TFilter;
-  p: TPoint;
-  FieldsStr: array of string;
-  s: string;
 begin
-  Filters.AddFilter(ScrollBox1, Self.Tag);
-
-  f := Filters.FFilters[High(Filters.FFilters)];
-  f.FFields.OnChange := @OnFilterChange;
-  f.FValue.OnChange := @OnFilterChange;
-  f.FOperations.OnChange := @OnFilterChange;
-  f.FValue.OnKeyPress := @EditOnKeyPress;
+  Filters.AddFilter;
   ApplyBtn.Enabled := True;
   ClearFiltersBtn.Enabled := True;
 end;
@@ -132,8 +122,10 @@ begin
   SQLQuery1.Close;
   SQLQuery1.SQL.Clear;
   s := BuildSelectPart(Self.Tag);
+  s += FWhereCondition;
   s += PrepareWherePart(Self.Tag, Filters.FFilters, FWhereCondition);
   SQLQuery1.SQL.Text := s;
+  SQLQuery1.SQL.SaveToFile('UDSQl.txt');
   SQLQuery1.Prepare;
   for i := 0 to High(Filters.FFilters) do
     begin
@@ -240,7 +232,7 @@ procedure TTableForm.OnDeleteBtnUp(Sender: TObject; Button: TMouseButton;
 var
   i, tg: integer;
 begin
-  tg := (Sender as TBitBtn).Tag;
+
 end;
 
 procedure TTableForm.EditOnKeyPress(Sender: TObject; var Key: char);
@@ -249,14 +241,23 @@ begin
     ApplyBtn.Click;
 end;
 
-constructor TTableForm.Create(AOwner: TComponent; AWhereCondition: string);
+constructor TTableForm.Create(AOwner: TComponent; AWhereCondition: string;
+  AFilterList: TFilterList);
 begin
   inherited Create(AOwner);
   SQLQuery1.SQL.Text := BuildSelectPart(High(MetaData.FTables)) + AWhereCondition;
   FWhereCondition := AWhereCondition;
   Self.Tag := High(MetaData.FTables);
   SQLQuery1.Open;
-  Filters := TFilterList.Create;
+  Filters := TFilterList.Create(ScrollBox1, Self.Tag, AFilterList);
+  ApplyBtn.Click;
+end;
+
+constructor TTableForm.Create(AOwner: TComponent; ATag: integer);
+begin
+  inherited Create(AOwner);
+  Filters := TFilterList.Create(ScrollBox1, ATag, @OnFilterChange);
+  Self.Tag := ATag;
 end;
 
 end.

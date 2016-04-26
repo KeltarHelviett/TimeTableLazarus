@@ -29,9 +29,19 @@ type
     FFilters: array of TFilter;
     procedure DeleteFilter(Index: integer);
     procedure ClearFilters;
-    procedure AddFilter(AParent: TWinControl; ATableTag: integer);
+    procedure AddFilter;
     procedure OnDeleteBtnUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
+    constructor Create(AParent: TWinControl; ATableTag: integer;
+      AFilterList: TFilterList; AOnChange: TNotifyEvent);
+    constructor Create(AParent: TWinControl; ATableTag: integer);
+    constructor Create(AParent: TWinControl; ATableTag: integer; AOnChange: TNotifyEvent);
+    constructor Create(AParent: TWinControl; ATableTag: integer;
+      AFilterList: TFilterList);
+    private
+      FParent: TWinControl;
+      FTableTag: integer;
+      FOnChange: TNotifyEvent;
   end;
 
 
@@ -57,7 +67,7 @@ begin
   SetLength(FFilters, 0);
 end;
 
-procedure TFilterList.AddFilter(AParent: TWinControl; ATableTag: integer);
+procedure TFilterList.AddFilter;
 var
   i, j, k: integer;
   f: TFilter;
@@ -76,16 +86,16 @@ begin
       p.x := 0;
       p.y := 0;
     end;
-  s := BuildSelectPart(ATableTag);
-  for i := 0 to High(MetaData.FTables[ATableTag].FFields) do
+  s := BuildSelectPart(FTableTag);
+  for i := 0 to High(MetaData.FTables[FTableTag].FFields) do
     begin
-      if MetaData.FTables[ATableTag].FFields[i].FRefTableName <> '' then
+      if MetaData.FTables[FTableTag].FFields[i].FRefTableName <> '' then
         begin
           for j := 0 to High(MetaData.FTables) do
             begin
-              if j = ATableTag then Continue;
+              if j = FTableTag then Continue;
               if MetaData.FTables[i].FRealName =
-                 MetaData.FTables[ATableTag].FFields[i].FRefTableName
+                 MetaData.FTables[FTableTag].FFields[i].FRefTableName
               then
               begin
                 for k := 1 to High(MetaData.FTables[j].FFields) do
@@ -100,12 +110,15 @@ begin
       else
         begin
           SetLength(FieldsStr, Length(FieldsStr) + 1 );
-          FieldsStr[High(FieldsStr)] := MetaData.FTables[ATableTag].FFields[i].FDisplayName;
+          FieldsStr[High(FieldsStr)] := MetaData.FTables[FTableTag].FFields[i].FDisplayName;
         end;
     end;
   SetLength(FFilters, Length(FFilters) + 1);
-  f := TFilter.Create(p, AParent, FieldsStr, High(FFilters));
+  f := TFilter.Create(p, FParent, FieldsStr, High(FFilters));
   f.FDeleteBtn.OnMouseUp := @OnDeleteBtnUp;
+  f.FDeleteBtn.OnClick := FOnChange;
+  f.FFields.OnChange := FOnChange;
+  f.FOperations.OnChange := FOnChange;
   FFilters[High(FFilters)] := f;
 end;
 
@@ -123,6 +136,58 @@ begin
     end;
   FFilters[High(FFilters)].Free;
   SetLength(FFilters, Length(FFilters) - 1);
+end;
+
+constructor TFilterList.Create(AParent: TWinControl; ATableTag: integer;
+  AFilterList: TFilterList; AOnChange: TNotifyEvent);
+var
+  i: integer;
+  f: TFilter;
+begin
+  inherited Create;
+  Self.FParent := AParent;
+  Self.FTableTag := ATableTag;
+  FOnChange := AOnChange;
+  for i := 0 to High(AFilterList.FFilters) do
+    begin
+      Self.AddFilter;
+      f := Self.FFilters[High(Self.FFilters)];
+      f.FValue.Text := AFilterList.FFilters[i].FValue.Text;
+      f.FFields.ItemIndex := AFilterList.FFilters[i].FFields.ItemIndex;
+      f.FOperations.ItemIndex := AFilterList.FFilters[i].FOperations.ItemIndex;
+    end;
+end;
+
+constructor TFilterList.Create(AParent: TWinControl; ATableTag: integer;
+  AFilterList: TFilterList);
+var
+  i: integer;
+  f: TFilter;
+begin
+  Self.FParent := AParent;
+  Self.FTableTag := ATableTag;
+  for i := 0 to High(AFilterList.FFilters) do
+    begin
+      Self.AddFilter;
+      f := Self.FFilters[High(Self.FFilters)];
+      f.FValue.Text := AFilterList.FFilters[i].FValue.Text;
+      f.FFields.ItemIndex := AFilterList.FFilters[i].FFields.ItemIndex;
+      f.FOperations.ItemIndex := AFilterList.FFilters[i].FOperations.ItemIndex;
+    end;
+end;
+
+constructor TFilterList.Create(AParent: TWinControl; ATableTag: integer);
+begin
+  FParent := AParent;
+  FTableTag := ATableTag;
+end;
+
+constructor TFilterList.Create(AParent: TWinControl; ATableTag: integer;
+  AOnChange: TNotifyEvent);
+begin
+ FParent := AParent;
+ FTableTag := ATableTag;
+ FOnChange  := AOnChange;
 end;
 
 

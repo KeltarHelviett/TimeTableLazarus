@@ -1,7 +1,7 @@
 object TableForm: TTableForm
-  Left = 1067
+  Left = 1001
   Height = 600
-  Top = 432
+  Top = 258
   Width = 800
   Caption = 'TableForm'
   ClientHeight = 600
@@ -46,7 +46,6 @@ object TableForm: TTableForm
       Top = 472
       Width = 135
       Caption = 'Clear Filters'
-      Enabled = False
       OnClick = ClearFiltersBtnClick
     end
     object ApplyBtn: TSpeedButton

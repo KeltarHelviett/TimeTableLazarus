@@ -6,7 +6,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, Grids,
-  StdCtrls, Buttons, UMetaData, UDB, UDirectory, UFilter, sqldb, UQueryBuild;
+  StdCtrls, Buttons, ExtCtrls, UMetaData, UDB, UDirectory, UFilter, sqldb,
+  UQueryBuild;
 
 type
 
@@ -27,7 +28,8 @@ type
     AddFilterBtn: TBitBtn;
     ClearFiltersBtn: TBitBtn;
     DrawGrid: TDrawGrid;
-    ScrollBox1: TScrollBox;
+    FiltersScrollBox: TScrollBox;
+    ScrollBox2: TScrollBox;
     TopHeadersLabel: TLabel;
     LeftHeadersLabel: TLabel;
     LeftHeadersBox: TComboBox;
@@ -54,6 +56,7 @@ type
   public
     function GetHeaders(ATableTag: integer): THeaders;
     procedure GetCellValues;
+    procedure OnFilterChange(Sender: TObject);
   end;
 
 var
@@ -78,7 +81,7 @@ begin
   TopHeadersBox.ItemIndex := 1;
   FHeadersBrushColor := RGBToColor(153, 51, 255);
   FHeightDelta := Self.Height - DrawGrid.Height;
-  FFilterList := TFilterList.Create;
+  FFilterList := TFilterList.Create(FiltersScrollBox, High(MetaData.FTables), @OnFilterChange);
   ApplyBtn.Click;
 end;
 
@@ -131,20 +134,20 @@ var
   FieldsStr: array of string;
   s: string;
 begin
-  FFilterList.AddFilter(ScrollBox1, High(MetaData.FTables));
-  ApplyBtn.Enabled := True;
+  FFilterList.AddFilter;
+  ApplyFiltersBtn.Enabled := True;
 end;
 
 procedure TTimeTableForm.DrawGridDblClick(Sender: TObject);
 var
   t: TTableForm;
+  s: string;
+  k: Integer;
 begin
   if (DrawGrid.Col <> 0) and (DrawGrid.Row <> 0) then
   begin
-    t := TTableForm.Create(Self,
-    BuildDrawGridCellQuery(FCurTopTable, FCurLeftTable,
-      FTopHeaders[DrawGrid.Col - 1].FID, FLeftHeaders[DrawGrid.Row - 1].FID)
-      + FFiltersCondition);
+    t := TTableForm.Create(Self, BuildDrawGridCellQuery(FCurTopTable, FCurLeftTable,
+      FTopHeaders[DrawGrid.Col - 1].FID, FLeftHeaders[DrawGrid.Row - 1].FID, False), FFilterList);
     t.Show;
   end;
 end;
@@ -152,7 +155,7 @@ end;
 procedure TTimeTableForm.DrawGridDrawCell(Sender: TObject; aCol, aRow: Integer;
   aRect: TRect; aState: TGridDrawState);
 var
-  i, j, k, l, m: integer;
+  i, j, k, l, m, y, cury: integer;
 begin
   if aCol = 0 then
     begin
@@ -188,6 +191,17 @@ begin
               aRect.Top += 14;
             end;
           aRect.Top += 45;
+        end;
+      //ShowMessage(IntToStr(aRect.Top));
+      if (Length(FCellValues[aCol - 1, aRow - 1]) <> 0) and
+          (aRect.Bottom < aRect.Top - 45) then
+        begin
+          aRect.Top := aRect.Top - (i + 1) * 45 - (j + 1) * 15;
+          DrawGrid.Canvas.Brush.Color := RGBToColor(204, 0, 102);
+          DrawGrid.Canvas.Polygon([Point(aRect.Right, aRect.Bottom),
+            Point(aRect.Right, aRect.Bottom - 15),
+            Point(aRect.Right - 15, aRect.Bottom) ]);
+          DrawGrid.Canvas.Brush.Color := clDefault;
         end;
     end;
 end;
@@ -244,15 +258,15 @@ begin
     for j := 0 to High(FLeftHeaders) do
       begin
         q.SQL.Clear;
-        s := BuildSelectPart(High(MetaData.FTables));
-        s += BuildDrawGridCellQuery(FCurTopTable, FCurLeftTable,
-          FTopHeaders[i].FID, FLeftHeaders[j].FID);
+        s := BuildDrawGridCellQuery(FCurTopTable, FCurLeftTable,
+          FTopHeaders[i].FID, FLeftHeaders[j].FID, True);
         s += FFiltersCondition;
         q.SQL.Text := s;
-        q.SQL.SaveToFile('SQL.txt');
         q.Prepare;
         for k := 0 to High(FFilterList.FFilters) do
           q.Params[k].AsString := FFilterList.FFilters[k].FValue.Text;
+        q.UnPrepare;
+        q.SQL.SaveToFile('SQL.txt');
         q.Open;
         while not(q.EOF) do
           begin
@@ -273,6 +287,11 @@ begin
   except
     on EVariantError do ShowMessage('Poor filter content');
   end;
+end;
+
+procedure TTimeTableForm.OnFilterChange(Sender: TObject);
+begin
+  ApplyFiltersBtn.Enabled := True;
 end;
 
 end.

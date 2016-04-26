@@ -15,7 +15,7 @@ function DeleteFieldFromQuery(AField, AQuery: string): string;
 function PrepareInsertPart(ATableTag: integer): string;
 function PrepareUpdatePart(ATableTag, Aid: integer): string;
 function BuildDrawGridCellQuery(ATopCB, ALeftCB: String; ATopHeaderID,
-  ALeftHeaderID: integer): string;
+  ALeftHeaderID: integer; AWithSelectPart: Boolean): string;
 
 implementation
 
@@ -171,11 +171,14 @@ begin
   Result += ' WHERE id = ' + IntToStr(Aid);
 end;
 
-function BuildDrawGridCellQuery(ATopCB, ALeftCB: string; ATopHeaderID,
-  ALeftHeaderID: integer): string;
+function BuildDrawGridCellQuery(ATopCB, ALeftCB: String; ATopHeaderID,
+  ALeftHeaderID: integer; AWithSelectPart: Boolean): string;
 
 begin
-  Result := Format(
+  Result := '';
+  if AWithSelectPart then
+    Result += BuildSelectPart(High(MetaData.FTables));
+  Result += Format(
     ' where %s.id = %d and %s.id = %d ',
     [
       ATopCB, ATopHeaderID,
