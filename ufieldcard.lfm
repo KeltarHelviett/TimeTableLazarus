@@ -1,7 +1,7 @@
 object CardForm: TCardForm
-  Left = 1084
+  Left = 283
   Height = 450
-  Top = 409
+  Top = 629
   Width = 450
   Caption = 'CardForm'
   ClientHeight = 450

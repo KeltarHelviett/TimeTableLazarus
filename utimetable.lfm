@@ -1,7 +1,7 @@
 object TimeTableForm: TTimeTableForm
-  Left = 7
+  Left = 832
   Height = 905
-  Top = 130
+  Top = 525
   Width = 1564
   Caption = 'TimeTableForm'
   ClientHeight = 905
@@ -50,6 +50,9 @@ object TimeTableForm: TTimeTableForm
     TabOrder = 3
     OnDblClick = DrawGridDblClick
     OnDrawCell = DrawGridDrawCell
+    OnMouseEnter = DrawGridMouseEnter
+    OnMouseUp = DrawGridMouseUp
+    OnSelectCell = DrawGridSelectCell
   end
   object LeftHeadersLabel: TLabel
     Left = 40
@@ -103,7 +106,7 @@ object TimeTableForm: TTimeTableForm
     OnClick = ClearFiltersBtnClick
     TabOrder = 7
   end
-  object ScrollBox2: TScrollBox
+  object FieldsToShowPanel: TScrollBox
     Left = 1232
     Height = 121
     Top = 29

@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, sqldb, db, FileUtil, DBDateTimePicker, Forms, Controls,
   Graphics, Dialogs, DBGrids, ExtCtrls, Buttons, UMetaData, StdCtrls, DbCtrls,
-  UQueryBuild, UFilter, UFieldCard, UNotification;
+  UQueryBuild, UFilter, UFieldCard, UNotification, UDB;
 
 type
 
@@ -184,6 +184,7 @@ begin
       s += ' WHERE id = ' + IntToStr(ind);
       SQLQuery1.SQL.Text := s;
       SQLQuery1.ExecSQL;
+      DataModule1.SQLTransaction1.Commit;
       ShowDefaultTable;
     end;
 end;
