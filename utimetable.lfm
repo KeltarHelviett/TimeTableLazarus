@@ -1,12 +1,14 @@
 object TimeTableForm: TTimeTableForm
-  Left = 832
+  Left = 78
   Height = 905
-  Top = 525
+  Top = 128
   Width = 1564
   Caption = 'TimeTableForm'
-  ClientHeight = 905
+  ClientHeight = 885
   ClientWidth = 1564
+  Menu = TimetableMenu
   OnCreate = FormCreate
+  OnMouseUp = FormMouseUp
   OnResize = FormResize
   LCLVersion = '1.4.4.0'
   object LeftHeadersBox: TComboBox
@@ -44,15 +46,21 @@ object TimeTableForm: TTimeTableForm
     ColCount = 2
     DefaultColWidth = 150
     DefaultRowHeight = 200
+    DragMode = dmAutomatic
     ExtendedSelect = False
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goRowSizing, goColSizing, goSmoothScroll]
     ScrollBars = ssBoth
     TabOrder = 3
+    OnClick = DrawGridClick
     OnDblClick = DrawGridDblClick
+    OnDragDrop = DrawGridDragDrop
+    OnDragOver = DrawGridDragOver
     OnDrawCell = DrawGridDrawCell
+    OnMouseDown = DrawGridMouseDown
     OnMouseEnter = DrawGridMouseEnter
     OnMouseUp = DrawGridMouseUp
     OnSelectCell = DrawGridSelectCell
+    OnStartDrag = DrawGridStartDrag
   end
   object LeftHeadersLabel: TLabel
     Left = 40
@@ -72,35 +80,36 @@ object TimeTableForm: TTimeTableForm
   end
   object FiltersScrollBox: TScrollBox
     Left = 376
-    Height = 120
-    Top = 32
-    Width = 704
+    Height = 123
+    Top = 29
+    Width = 672
     HorzScrollBar.Page = 1
     VertScrollBar.Page = 1
     TabOrder = 4
   end
   object ApplyFiltersBtn: TBitBtn
-    Left = 1104
+    Left = 1056
     Height = 30
-    Top = 120
+    Top = 112
     Width = 75
     Caption = 'Apply Filters'
+    Enabled = False
     OnClick = ApplyFiltersBtnClick
     TabOrder = 5
   end
   object AddFilterBtn: TBitBtn
-    Left = 1104
+    Left = 1056
     Height = 30
-    Top = 40
+    Top = 32
     Width = 75
     Caption = 'Add Filter'
     OnClick = AddFilterBtnClick
     TabOrder = 6
   end
   object ClearFiltersBtn: TBitBtn
-    Left = 1104
+    Left = 1056
     Height = 30
-    Top = 80
+    Top = 72
     Width = 75
     Caption = 'Clear Filters'
     OnClick = ClearFiltersBtnClick
@@ -114,5 +123,46 @@ object TimeTableForm: TTimeTableForm
     HorzScrollBar.Page = 1
     VertScrollBar.Page = 1
     TabOrder = 8
+  end
+  object Button1: TButton
+    Left = 1440
+    Height = 25
+    Top = 37
+    Width = 75
+    Caption = 'Button1'
+    OnClick = Button1Click
+    TabOrder = 9
+  end
+  object Button2: TButton
+    Left = 1440
+    Height = 25
+    Top = 72
+    Width = 75
+    Caption = 'Button2'
+    TabOrder = 10
+  end
+  object TimetableMenu: TMainMenu
+    left = 322
+    top = 14
+    object MFile: TMenuItem
+      Caption = 'File'
+      object MFileSaveAs: TMenuItem
+        Caption = 'Save As'
+        OnClick = MFileSaveAsClick
+      end
+    end
+    object MView: TMenuItem
+      Caption = 'View'
+      object MViewConflicts: TMenuItem
+        Caption = 'Conflicts'
+        OnClick = MViewConflictsClick
+      end
+    end
+  end
+  object SaveDialog_Timetable: TSaveDialog
+    FileName = 'Timetable'
+    Filter = 'HTML файл|*.html|Таблица Excel|*.xls'
+    left = 153
+    top = 18
   end
 end

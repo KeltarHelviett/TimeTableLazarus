@@ -1,0 +1,20 @@
+object ConlfictsForm: TConlfictsForm
+  Left = 788
+  Height = 921
+  Top = 62
+  Width = 824
+  Caption = 'Conflicts'
+  ClientHeight = 921
+  ClientWidth = 824
+  OnCreate = FormCreate
+  LCLVersion = '1.4.4.0'
+  object TreeView: TTreeView
+    Left = 0
+    Height = 921
+    Top = 0
+    Width = 824
+    DefaultItemHeight = 18
+    TabOrder = 0
+    OnDblClick = TreeViewDblClick
+  end
+end

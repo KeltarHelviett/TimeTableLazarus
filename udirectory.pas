@@ -97,7 +97,7 @@ procedure TTableForm.AddRecordBtnClick(Sender: TObject);
 var
   newForm: TCardForm;
 begin
-  newForm := TCardForm.Create(TableForm, 0, Self.Tag);
+  newForm := TCardForm.Create(Self, 0, Self.Tag);
   newForm.Show;
 end;
 
@@ -123,10 +123,12 @@ begin
   SQLQuery1.SQL.Clear;
   s := BuildSelectPart(Self.Tag);
   s += FWhereCondition;
-  s += PrepareWherePart(Self.Tag, Filters.FFilters, FWhereCondition);
+  if Filters <> nil then
+    s += PrepareWherePart(Self.Tag, Filters.FFilters, FWhereCondition);
   SQLQuery1.SQL.Text := s;
   SQLQuery1.SQL.SaveToFile('UDSQl.txt');
   SQLQuery1.Prepare;
+  if Filters <> nil then
   for i := 0 to High(Filters.FFilters) do
     begin
       SQLQuery1.Params[i].AsString := Filters.FFilters[i].FValue.Text;

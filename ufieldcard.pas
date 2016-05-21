@@ -27,7 +27,6 @@ type
     procedure CloseBtnClick(Sender: TObject);
     procedure CreateAddCard;
     procedure FillComboBox(var AComboBox: TAssociativeComboBox; ATableInd, AFieldInd: integer);
-    constructor Create(AOwner: TComponent; Aid: integer; ATag: integer);
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormDeactivate(Sender: TObject);
     procedure SaveBtnClick(Sender: TObject);
@@ -41,17 +40,22 @@ type
     FLabels: array of TLabel;
     FEdits: array of TEdit;
     FComboBoxes: array of TAssociativeComboBox;
-    FCardMode: (cmAdd, cmEdit);
+    FCardMode: (cmAdd, cmEdit, cmAddFromTTForm);
+    FIsCorrect: Boolean;
+    id: integer;
+    FTopId, FLeftId: Integer;
+    FTopTableTag, FLeftTableTag: Integer;
   public
+    constructor Create(AOwner: TComponent; Aid: integer; ATag: integer);
+    constructor Create(AOwner: TComponent; ALeftId, ATopId, ATopTag, ALeftTag: integer);
     procedure CreateArrayOfIds;
     procedure BringCardToFront(Sender: TObject);
+    procedure GetComboBoxesTextsWithCase(AId, ATag: integer);
     { public declarations }
   end;
 
 var
   CardForm: TCardForm;
-
-  id: integer;
 implementation
 
 {$R *.lfm}
@@ -112,7 +116,6 @@ begin
                 FComboBox.Top := p.y;
                 FComboBox.Style := csDropDownList;
                 FillComboBox(c, ind, j);
-                FComboBox.ItemIndex := 0;
               end;
               p.y += 30;
               SetLength(FComboBoxes, Length(FComboBoxes) + 1);
@@ -124,6 +127,11 @@ begin
     begin
       GetEditsTexts();
       GetComboBoxesTexts();
+    end;
+  if (FCardMode = cmAddFromTTForm) then
+    begin
+      GetComboBoxesTextsWithCase(FTopId, FTopTableTag);
+      GetComboBoxesTextsWithCase(FLeftId, FLeftTableTag);
     end;
 end;
 
@@ -171,6 +179,22 @@ begin
     CreateAddCard;
 end;
 
+constructor TCardForm.Create(AOwner: TComponent; ALeftId, ATopId, ATopTag,
+  ALeftTag: integer);
+begin
+  inherited Create(AOwner);
+  FLeftId := ALeftId;
+  FTopId := ATopId;
+  FLeftTableTag := ALeftTag;
+  FTopTableTag := ATopTag;
+  SetAddMode;
+  FCardMode := cmAddFromTTForm;
+  Self.Tag := High(MetaData.FTables);
+  id := 0;
+  CreateAddCard;
+  CardSQLQuery.SQL.Text:= GetCardRecordQuery();
+end;
+
 procedure TCardForm.FormCloseQuery(Sender: TObject; var CanClose: boolean);
 var
   i: integer;
@@ -200,11 +224,10 @@ var
 begin
   CardSQLQuery.Close;
   j := 0; k := 0;
-  if FCardMode = cmAdd then
+  if (FCardMode = cmAdd) or (FCardMode = cmAddFromTTForm)then
     CardSQLQuery.SQL.Text := PrepareInsertPart(Self.Tag)
   else
     CardSQLQuery.SQL.Text := PrepareUpdatePart(Self.Tag, id);
-  CardSQLQuery.SQL.SaveToFile('SQL.txt');
   CardSQLQuery.Prepare;
   for i := 1 to High(MetaData.FTables[Self.Tag].FFields) do
     begin
@@ -216,6 +239,12 @@ begin
       else
         begin
           if k = Length(FComboBoxes) then Continue;
+          if FComboBoxes[k].FComboBox.ItemIndex < 0 then
+            begin
+              ShowMessage('Fill all fields');
+              FIsCorrect := False;
+              Exit;
+            end;
           CardSQLQuery.Params[i - 1].AsInteger :=
             FComboBoxes[k].FIndexes[FComboBoxes[k].FComboBox.ItemIndex];
           Inc(k);
@@ -231,8 +260,10 @@ var
   i: integer;
   s: string;
 begin
+  FIsCorrect := True;
   SaveBtn.Click;
-  CloseBtn.Click;
+  if FIsCorrect then
+    CloseBtn.Click;
 end;
 
 procedure TCardForm.SetAddMode;
@@ -282,12 +313,35 @@ begin
   Self.Show;
 end;
 
+procedure TCardForm.GetComboBoxesTextsWithCase(AId, ATag: integer);
+var
+  q: TSQLQuery;
+  i, j: integer;
+  s: String;
+begin
+  s := BuildSelectPart(ATag);
+  s += ' WHERE ID = ' + IntToStr(AId);
+  q := TSQLQuery.Create(Self);
+  q.SQL.Text := s;
+  q.DataBase := DataModule1.IBConnection1;
+  q.Open;
+  for i := 0 to q.FieldDefs.Count - 1 do
+    for j := 0 to High(FComboBoxes) do
+      begin
+        //ShowMessage(q.FieldByName(q.FieldDefs.Items[1].DisplayName).AsString);
+        s := FComboBoxes[j].FComboBox.Text;
+        FComboBoxes[j].FComboBox.Text := q.FieldByName(q.FieldDefs.Items[i].DisplayName).AsString;
+        if FComboBoxes[j].FComboBox.ItemIndex = -1 then
+          FComboBoxes[j].FComboBox.Text := s;
+      end;
+end;
+
 function TCardForm.GetCardRecordQuery: string;
 var
   i, j: integer;
   t, rt: TTable;
 begin
-  Result := DeleteFieldFromQuery('id', BuildSelectPart(Self.Tag));
+  Result := DeleteFieldFromQuery('ID', BuildSelectPart(Self.Tag));
   t := MetaData.FTables[Self.Tag];
   for i := 1 to High(t.FFields) do
     if t.FFields[i].FRefTableName <> '' then
@@ -297,7 +351,7 @@ begin
           if not rt.FFields[j].FPermittedToShow then
             Result := DeleteFieldFromQuery(rt.FFields[j].FRealName, Result);
       end;
-  Result += ' WHERE ' + t.FRealName + '.id = ' + IntToStr(id);
+  Result += ' WHERE ' + t.FRealName + '.ID = ' + IntToStr(id);
 end;
 
 end.

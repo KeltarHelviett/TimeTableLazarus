@@ -42,7 +42,7 @@
         <PackageName Value="LCL"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="10">
+    <Units Count="13">
       <Unit0>
         <Filename Value="TimeTable.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -107,6 +107,24 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="UTimeTable"/>
       </Unit9>
+      <Unit10>
+        <Filename Value="uconflict.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="ConlfictsForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UConflict"/>
+      </Unit10>
+      <Unit11>
+        <Filename Value="uexcel.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UExport"/>
+      </Unit11>
+      <Unit12>
+        <Filename Value="uconvert.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UConvert"/>
+      </Unit12>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -119,6 +137,20 @@
       <IncludeFiles Value="$(ProjOutDir)"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
+    <Parsing>
+      <SyntaxOptions>
+        <IncludeAssertionCode Value="True"/>
+      </SyntaxOptions>
+    </Parsing>
+    <CodeGeneration>
+      <Checks>
+        <IOChecks Value="True"/>
+        <RangeChecks Value="True"/>
+        <OverflowChecks Value="True"/>
+        <StackChecks Value="True"/>
+      </Checks>
+      <VerifyObjMethodCallValidity Value="True"/>
+    </CodeGeneration>
     <Linking>
       <Options>
         <Win32>

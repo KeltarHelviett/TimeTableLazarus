@@ -21,6 +21,8 @@ type
     MTables: TMenuItem;
     MFileExit: TMenuItem;
     procedure FormCreate(Sender: TObject);
+    procedure FormMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure MTimeTableClick(Sender: TObject);
     procedure MFileExitClick(Sender: TObject);
     procedure MHelpAboutClick(Sender: TObject);
@@ -74,6 +76,12 @@ begin
       m.OnClick := @MTablesItemClick;
       MTables.Add(m);
     end;
+end;
+
+procedure TMain.FormMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+
 end;
 
 procedure TMain.MTimeTableClick(Sender: TObject);

@@ -46,6 +46,7 @@ procedure TNotifier.Update;
 var
   i: integer;
 begin
+  if Length(FSubscibers) <> 0 then
   for i := 0 to High(FSubscibers) do
     FSubscibers[i](nil);
 end;

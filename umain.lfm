@@ -1,11 +1,12 @@
 object Main: TMain
-  Left = 1532
+  Left = 279
   Height = 240
-  Top = 83
+  Top = 120
   Width = 320
   Caption = 'TimeTable'
   Menu = MainMenu1
   OnCreate = FormCreate
+  OnMouseUp = FormMouseUp
   LCLVersion = '1.4.4.0'
   object MainMenu1: TMainMenu
     left = 73

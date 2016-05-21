@@ -21,6 +21,7 @@ type
     FRealName: string;
     FDisplayName: string;
     FFields: array of TField;
+    FFieldCount: Integer;
   end;
 
   { TMetaData }
@@ -47,13 +48,15 @@ begin
   SetLength(FTables, Length(FTables) + 1);
   FTables[High(FTables)].FRealName := ARealTableName;
   FTables[High(FTables)].FDisplayName := ADisplayTableName;
+  FTables[High(FTables)].FFieldCount := 0;
 end;
 
 procedure TMetaData.AddField(var ATable: TTable; ARealFieldName,
   ADisplayFieldName, ARefTableName, ARefFieldName: string; ARefTableInd: integer
   );
 begin
-SetLength(ATable.FFields, Length(ATable.FFields) + 1);
+  SetLength(ATable.FFields, Length(ATable.FFields) + 1);
+  ATable.FFieldCount += 1;
   with ATable.FFields[High(ATable.FFields)] do
     begin
       FRealName := ARealFieldName;
@@ -69,6 +72,7 @@ procedure TMetaData.AddField(var ATable: TTable; ARealFieldName,
   ADisplayFieldName: string; APermittedToShow: Boolean);
 begin
   SetLength(ATable.FFields, Length(ATable.FFields) + 1);
+  ATable.FFieldCount += 1;
   with ATable.FFields[High(ATable.FFields)] do
     begin
       FRealName := ARealFieldName;
@@ -84,45 +88,45 @@ initialization
   MetaData := TMetaData.Create;
   with MetaData do
     begin
-      AddTable('Groups','Группы');
-      AddField(FTables[High(FTables)], 'id', 'ID', True);
-      AddField(FTables[High(FTables)], 'name', 'Имя Группы', True);
-      AddTable('Lessons','Предметы');
-      AddField(FTables[High(FTables)], 'id', 'ID', True);
-      AddField(FTables[High(FTables)], 'name', 'Название Предмета', True);
-      AddTable('Teachers','Преподаватели');
-      AddField(FTables[High(FTables)], 'id', 'ID', True);
-      AddField(FTables[High(FTables)], 'last_name', 'Фамилия', True);
-      AddField(FTables[High(FTables)], 'first_name', 'Имя', False);
-      AddField(FTables[High(FTables)], 'middle_name', 'Отчество', False);
-      AddTable('Classrooms','Аудитории');
-      AddField(FTables[High(FTables)], 'id', 'ID', True);
-      AddField(FTables[High(FTables)], 'name', 'Номер Аудитории', True);
-      AddTable('Lesson_Times','Время занятий');
-      AddField(FTables[High(FTables)], 'id', 'ID', True);
-      AddField(FTables[High(FTables)], 'begin_', 'Начало', True);
-      AddField(FTables[High(FTables)], 'end_', 'Конец', True);
-      AddTable('Weekdays','Дни недели');
-      AddField(FTables[High(FTables)], 'id','ID', True);
-      AddField(FTables[High(FTables)], 'name', 'День Недели', True);
-      AddTable('Lesson_Types','Тип предмета');
-      AddField(FTables[High(FTables)], 'id', 'ID', True);
-      AddField(FTables[High(FTables)], 'name', 'Тип', True);
-      AddTable('Timetable', 'Расписание');
-      AddField(FTables[High(FTables)], 'id', 'ID', True);
-      AddField(FTables[High(FTables)], 'lesson_id', 'lesson_id', 'Lessons', 'id', 1);
-      AddField(FTables[High(FTables)], 'lesson_type_id', 'lesson_type_id',
-        'Lesson_Types', 'id', 6);
-      AddField(FTables[High(FTables)], 'teacher_id', 'teacher_id',
-                                       'Teachers', 'id', 2);
-      AddField(FTables[High(FTables)], 'group_id', 'group_id', 'Groups', 'id', 0
+      AddTable('GROUPS','Группы');
+      AddField(FTables[High(FTables)], 'ID', 'ID', True);
+      AddField(FTables[High(FTables)], 'NAME', 'Имя Группы', True);
+      AddTable('LESSONS','Предметы');
+      AddField(FTables[High(FTables)], 'ID', 'ID', True);
+      AddField(FTables[High(FTables)], 'NAME', 'Название Предмета', True);
+      AddTable('TEACHERS','Преподаватели');
+      AddField(FTables[High(FTables)], 'ID', 'ID', True);
+      AddField(FTables[High(FTables)], 'LAST_NAME', 'Фамилия', True);
+      AddField(FTables[High(FTables)], 'FIRST_NAME', 'Имя', False);
+      AddField(FTables[High(FTables)], 'MIDDLE_NAME', 'Отчество', False);
+      AddTable('CLASSROOMS','Аудитории');
+      AddField(FTables[High(FTables)], 'ID', 'ID', True);
+      AddField(FTables[High(FTables)], 'NAME', 'Номер Аудитории', True);
+      AddTable('LESSON_TIMES','Время занятий');
+      AddField(FTables[High(FTables)], 'ID', 'ID', True);
+      AddField(FTables[High(FTables)], 'BEGIN_', 'Начало', True);
+      AddField(FTables[High(FTables)], 'END_', 'Конец', True);
+      AddTable('WEEKDAYS','Дни недели');
+      AddField(FTables[High(FTables)], 'ID','ID', True);
+      AddField(FTables[High(FTables)], 'NAME', 'День Недели', True);
+      AddTable('LESSON_TYPES','Тип предмета');
+      AddField(FTables[High(FTables)], 'ID', 'ID', True);
+      AddField(FTables[High(FTables)], 'NAME', 'Тип', True);
+      AddTable('TIMETABLE', 'Расписание');
+      AddField(FTables[High(FTables)], 'ID', 'ID', True);
+      AddField(FTables[High(FTables)], 'LESSON_ID', 'LESSON_ID', 'LESSONS', 'ID', 1);
+      AddField(FTables[High(FTables)], 'LESSON_TYPE_ID', 'LESSON_TYPE_ID',
+        'LESSON_TYPES', 'ID', 6);
+      AddField(FTables[High(FTables)], 'TEACHER_ID', 'TEACHER_ID',
+                                       'TEACHERS', 'ID', 2);
+      AddField(FTables[High(FTables)], 'GROUP_ID', 'GROUP_ID', 'GROUPS', 'ID', 0
       );
-      AddField(FTables[High(FTables)], 'classroom_id', 'classroom_id',
-                                       'Classrooms', 'id', 3);
-      AddField(FTables[High(FTables)], 'weekday_id', 'weekday_id', 'Weekdays',
-        'id', 5);
-      AddField(FTables[High(FTables)], 'lesson_time_id', 'lesson_time_id',
-                                       'Lesson_Times', 'id', 4);
+      AddField(FTables[High(FTables)], 'CLASSROOM_ID', 'CLASSROOM_ID',
+                                       'CLASSROOMS', 'ID', 3);
+      AddField(FTables[High(FTables)], 'WEEKDAY_ID', 'WEEKDAY_ID', 'WEEKDAYS',
+        'ID', 5);
+      AddField(FTables[High(FTables)], 'LESSON_TIME_ID', 'LESSON_TIME_ID',
+                                       'LESSON_TIMES', 'ID', 4);
     end;
 end.
 
