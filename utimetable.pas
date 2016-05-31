@@ -39,8 +39,6 @@ type
     ApplyBtn: TBitBtn;
     ApplyFiltersBtn: TBitBtn;
     AddFilterBtn: TBitBtn;
-    Button1: TButton;
-    Button2: TButton;
     ClearFiltersBtn: TBitBtn;
     DrawGrid: TDrawGrid;
     FiltersScrollBox: TScrollBox;
@@ -48,7 +46,7 @@ type
     MFileSaveAs: TMenuItem;
     MViewConflicts: TMenuItem;
     MView: TMenuItem;
-    SaveDialog_Timetable: TSaveDialog;
+    SaveDialogTimetable: TSaveDialog;
     TimetableMenu: TMainMenu;
     MFile: TMenuItem;
     TopHeadersLabel: TLabel;
@@ -111,7 +109,7 @@ type
     FCurConflictID: Integer;
   public
     function GetHeaders(ATableTag: integer): THeaders;
-    procedure GetCellValues;
+    procedure GetCellValues;// OLD VERSION. Query for each cell
     procedure OnFilterChange(Sender: TObject);
     procedure GetCheckBoxes;
     procedure OnCheckBoxChange(Sender: TObject);
@@ -131,6 +129,8 @@ type
     procedure SetTableStyle(var AText: string);
     procedure OpenConflict();
     procedure PopUpMenuClick(Sender: TObject);
+    procedure GetCellValuesOptim;// NEW VERSION. 1 query for whole tabre
+    function GetFieldName(ATableTag: Integer): string;
   end;
 
 var
@@ -188,7 +188,7 @@ var
   i, j, row, col: integer;
   tempTop, tempLeft: integer;
 begin
-  if not(SaveDialog_Timetable.Execute) then exit;
+  if not(SaveDialogTimetable.Execute) then exit;
   tempLeft := LeftHeadersBox.ItemIndex;
   tempTop := TopHeadersBox.ItemIndex;
   TopHeadersBox.ItemIndex := tempLeft;
@@ -230,7 +230,7 @@ begin
   TopHeadersBox.ItemIndex := tempTop;
   LeftHeadersBox.ItemIndex := tempLeft;
   ApplyBtn.Click;
-  AssignFile(F, SaveDialog_Timetable.FileName);
+  AssignFile(F, SaveDialogTimetable.FileName);
   Rewrite(F);
   Write(F, html);
   CloseFile(F);
@@ -250,22 +250,22 @@ function HeaderTable(ACb: TComboBox): String;
       Result := MetaData.FTables[Integer(ACb.Items.Objects[ACb.ItemIndex])].FRealName;
   end;
 begin
+  FCurTopTable := HeaderTable(TopHeadersBox);
+  FCurLeftTable := HeaderTable(LeftHeadersBox);
   FLeftHeaders := GetHeaders(LeftHeadersBox.ItemIndex);
   FTopHeaders := GetHeaders(TopHeadersBox.ItemIndex);
   DrawGrid.RowCount := Length(FLeftHeaders) + 1;
   DrawGrid.ColCount := Length(FTopHeaders) + 1;
   FCurTopTable := HeaderTable(TopHeadersBox);
   FCurLeftTable := HeaderTable(LeftHeadersBox);
-
-
   RecheckBoxes;
-
   GetButtonLists;
   FCurLeftTableIndex := LeftHeadersBox.ItemIndex;
   FCurTopTableIndex := TopHeadersBox.ItemIndex;
-  CalculateConflictCells;
-  GetRecordsInConflict;
-  GetCellValues;
+  //CalculateConflictCells;
+  //GetRecordsInConflict;
+  GetCellValuesOptim;
+  //GetCellValues;
   DrawGrid.Invalidate;
   ApplyBtn.Enabled := False;
 end;
@@ -274,7 +274,7 @@ procedure TTimeTableForm.ApplyFiltersBtnClick(Sender: TObject);
 begin
   FFiltersCondition := PrepareWherePart(High(MetaData.FTables), FFilterList.FFilters, ' ');
   GetButtonLists;
-  GetCellValues;
+  GetCellValuesOptim;
   DrawGrid.Invalidate;
   ApplyFiltersBtn.Enabled := False;
 end;
@@ -286,7 +286,7 @@ var
   i, j, row, col: integer;
   tempTop, tempLeft: integer;
 begin
- // if not(SaveDialog_Timetable.Execute) then exit;
+  if not(SaveDialogTimetable.Execute) then exit;
   tempLeft := LeftHeadersBox.ItemIndex;
   tempTop := TopHeadersBox.ItemIndex;
   TopHeadersBox.ItemIndex := tempLeft;
@@ -428,12 +428,14 @@ begin
           aRect.Top += 15;
           inc(ind);
 
-          p1 := Point(aRect.Left, aRect.Top);
+
         end;
-      if (Length(FButtonLists[aCol - 1][aRow - 1].FButtons) >= 3) then
-        inc(ind);
+      ind := 2;
+      {if (Length(FButtonLists[aCol - 1][aRow - 1].FButtons) >= 3) then
+        inc(ind);}
       for i := 0 to High(FCellValues[aCol - 1, aRow - 1]) do
         begin
+          p1 := Point(aRect.Left, aRect.Top);
           for j := 0 to High(FCellValues[aCol - 1, aRow - 1, i]) do
             begin
               if FCellValues[aCol - 1, aRow - 1, i, j] = '' then Continue;
@@ -450,21 +452,25 @@ begin
           FButtonLists[aCol - 1][aRow - 1].FButtons[ind].FRect :=
             Rect(aRect.Left + 16, aRect.Top, aRect.Left + 31, aRect.Top + 15);
           ind += 1;
-          if (BinSearch(FConflictIDS, FButtonLists[aCol - 1][aRow - 1].FButtons[ind - 1].FID)) then
+          {if (BinSearch(FConflictIDS, FButtonLists[aCol - 1][aRow - 1].FButtons[ind - 1].FID)) then
             begin
               DrawGrid.Canvas.Draw(aRect.Left + 30, aRect.Top, FConflict);
               FButtonLists[aCol - 1][aRow - 1].FButtons[ind].FRect :=
                 Rect(aRect.Left + 32, aRect.Top, aRect.Left + 43, aRect.Top + 15);
               inc(ind);
-            end;
-          aRect.Top += 45;
+            end;}
+          p2 := Point(aRect.Right, aRect.Top);
+          FButtonLists[aCol - 1][aRow - 1].FButtons[ind].FRect :=
+            Rect(p1.x, p1.y, p2.x, p2.y);
+          aRect.Top += 35;
+          ind += 1;
         end;
-      p2 := Point(aRect.Right, aRect.Top);
-      if ind <> 2 then
+
+      {if ind <> 2 then
         begin
           FButtonLists[aCol - 1][aRow - 1].FButtons[2].FRect :=
             Rect(p1.x, p1.y, p2.x, p2.y);
-        end;
+        end;                             }
       if (Length(FCellValues[aCol - 1, aRow - 1]) <> 0) and
           (aRect.Bottom < aRect.Top - 45) then
         begin
@@ -507,7 +513,7 @@ begin
         if FButtons[i].FButtonType = btDrag then
           if PtInRect(FButtons[i].FRect, Point(X, Y)) then
             begin
-              FDragId := FButtons[i + 1].FID;
+              FDragId := FButtons[i].FID;
               FDragCell := Point(cell.x - 1, cell.y - 1);
               Break;
             end;
@@ -573,12 +579,12 @@ var
   s: string;
   i, id: integer;
   t: TTable;
-  sl: TStringList;
 begin
   SetLength(Result, 0);
   q := TSQLQuery.Create(Self);
   q.DataBase := DataModule1.IBConnection1;
-  q.SQL.Text := BuildSelectPart(ATableTag);
+  s := Format('%s ORDER BY %s', [BuildSelectPart(ATableTag), 'ID']);
+  q.SQL.Text := s;
   t := MetaData.FTables[ATableTag];
   q.Open;
   s := '';
@@ -655,13 +661,13 @@ begin
                   btns[b].FButtonType := btEdit;
                   btns[b].FID := btns[b - 1].FID;
                   inc(b);
-                  if BinSearch(FConflictIDS, btns[b - 1].FID) then
+                  {if BinSearch(FConflictIDS, btns[b - 1].FID) then
                     begin
                       SetLength(btns, Length(btns) + 1);
                       btns[b].FButtonType := btConflict;
                       btns[b].FID := btns[b - 1].FID;
                       inc(b);
-                    end;
+                    end; }
                   Continue;
                 end;
                 if FCheckBoxes[k - 1].Checked then
@@ -726,7 +732,7 @@ begin
   //ApplyBtn.Click;
   //ApplyBtn.Enabled := True;
   GetButtonLists;
-  GetCellValues;
+  GetCellValuesOptim;
   DrawGrid.Invalidate;
 end;
 
@@ -801,7 +807,7 @@ begin
       q.SQL.Text := s;
       q.ExecSQL;
       DataModule1.SQLTransaction1.Commit;
-      GetCellValues;
+      GetCellValuesOptim;
       DrawGrid.Invalidate;
     end;
 end;
@@ -894,17 +900,17 @@ function TTimeTableForm.BinSearch(var a: TIDS; n: integer): Boolean;
 var
   l, r, mid: Integer;
 begin
-  Result := False;
+ { Result := False;
   l := Low(a);
   r := High(a) + 1;
   while l < (r - 1) do
     begin
       mid := (l + r) div 2;
-      //ShowMessage(IntToStr(a[mid]));
       if a[mid] > n then r := mid
       else l := mid;
     end;
-  if a[l] = n then Result := True;
+  if a[l] = n then Result := True; }
+  Result := false;
 end;
 
 procedure TTimeTableForm.SetSaveDialogFilters;
@@ -954,12 +960,97 @@ begin
       sum += FMultiplicity[i];
     end;
   s += ' WHERE ';
-  ShowMessage(IntToStr(FMultiplicity[i]));
   for j := sum to sum + FMultiplicity[i] - 1 do
     s += ' Timetable.id = '  + IntToStr(FConflictRecords[j].FID) + ' OR ';
   Delete(s, Length(s) - 3, 4);
   t := TTableForm.Create(Self, s, FFilterList);
   t.Show;
+end;
+
+procedure TTimeTableForm.GetCellValuesOptim;
+var
+  i, j, k, b, highij: integer;
+  btns: array of TModifyButton;
+  q: TSQLQuery;
+  s, tmp, topFieldName, leftFieldName: string;
+begin
+  topFieldName := GetFieldName(TopHeadersBox.ItemIndex);
+  leftFieldName := GetFieldName(LeftHeadersBox.ItemIndex);
+  q := TSQLQuery.Create(Self);
+  tmp := BuildSelectPart(High(MetaData.FTables));
+  Delete(tmp, 1, 7);
+  q.DataBase := DataModule1.IBConnection1;
+  q.SQL.Text := Format('SELECT %s, %s, %s ORDER BY %s, %s',
+                  [  'TIMETABLE.' + topFieldName,
+                     'TIMETABLE.' + leftFieldName,
+                     tmp,
+                     FCurTopTable + '.ID',
+                     FCurLeftTable + '.ID'
+                  ]);
+  q.SQL.SaveToFile('Op.txt');
+  q.Open;
+  SetLength(FCellValues, 0);
+  SetLength(FCellValues, Length(FTopHeaders));
+  for i := 0 to High(FCellValues) do
+    SetLength(FCellValues[i], Length(FLeftHeaders));
+   i := 0;
+   j := 0;
+  while ((i <= High(FTopHeaders))) do
+    begin
+      while ((j <= High(FLeftHeaders))) do
+        begin
+          SetLength(btns, 2);
+          btns[0].FButtonType := btOpen;
+          btns[1].FButtonType := btEdit;
+          b := 2;
+          while (not(q.EOF) and
+                (q.FieldByName(topFieldName).AsInteger = FTopHeaders[i].FID) and
+                (q.FieldByName(leftFieldName).AsInteger = FLeftHeaders[j].FID)) do
+            begin
+              SetLength(FCellValues[i][j], Length(FCellValues[i][j]) + 1);
+              highij := High(FCellValues[i][j]);
+              SetLength(FCellValues[i][j][highij], q.FieldCount - 2);
+              for k := 2 to q.FieldCount - 1 do
+                begin
+                  if q.FieldDefs.Items[k].DisplayName = 'ID' then
+                    begin
+                      SetLength(btns, Length(btns) + 3);
+                      btns[b].FButtonType := btDelete;
+                      btns[b].FID := q.FieldByName(q.FieldDefs.Items[k].DisplayName).AsInteger;
+                      inc(b);
+                      btns[b].FButtonType := btEdit;
+                      btns[b].FID := btns[b - 1].FID;
+                      inc(b);
+                      btns[b].FButtonType := btDrag;
+                      btns[b].FID := btns[b - 1].FID;
+                      inc(b);
+                      Continue;
+                    end;
+                  if (FCheckBoxes[k - 3].Checked) then
+                    FCellValues[i][j][highij][k] :=
+                      q.FieldByName(q.FieldDefs.Items[k].DisplayName).AsString;
+                end;
+              q.Next;
+            end;
+        FButtonLists[i][j].FButtons := btns;
+        inc(j);
+        end;
+      j := 0;
+      inc(i);
+    end;
+  q.Free;
+end;
+
+function TTimeTableForm.GetFieldName(ATableTag: Integer): string;
+var
+  i: integer;
+  t: TTable;
+begin
+  t := MetaData.FTables[High(MetaData.FTables)];
+  for i := 0 to High(t.FFields) do
+    if (t.FFields[i].FRefTableInd = ATableTag) then
+      Exit(t.FFields[i].FRealName);
+  Result := '';
 end;
 
 end.

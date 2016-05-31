@@ -1,4 +1,4 @@
-unit UConvert;
+unit UExcel;
 
 {$mode objfpc}{$H+}
 

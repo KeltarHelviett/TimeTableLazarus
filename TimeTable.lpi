@@ -42,7 +42,7 @@
         <PackageName Value="LCL"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="13">
+    <Units Count="12">
       <Unit0>
         <Filename Value="TimeTable.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -118,13 +118,8 @@
       <Unit11>
         <Filename Value="uexcel.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="UExport"/>
+        <UnitName Value="UExcel"/>
       </Unit11>
-      <Unit12>
-        <Filename Value="uconvert.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="UConvert"/>
-      </Unit12>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

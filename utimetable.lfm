@@ -1,7 +1,7 @@
 object TimeTableForm: TTimeTableForm
-  Left = 78
+  Left = 158
   Height = 905
-  Top = 128
+  Top = 482
   Width = 1564
   Caption = 'TimeTableForm'
   ClientHeight = 885
@@ -124,23 +124,6 @@ object TimeTableForm: TTimeTableForm
     VertScrollBar.Page = 1
     TabOrder = 8
   end
-  object Button1: TButton
-    Left = 1440
-    Height = 25
-    Top = 37
-    Width = 75
-    Caption = 'Button1'
-    OnClick = Button1Click
-    TabOrder = 9
-  end
-  object Button2: TButton
-    Left = 1440
-    Height = 25
-    Top = 72
-    Width = 75
-    Caption = 'Button2'
-    TabOrder = 10
-  end
   object TimetableMenu: TMainMenu
     left = 322
     top = 14
@@ -159,7 +142,7 @@ object TimeTableForm: TTimeTableForm
       end
     end
   end
-  object SaveDialog_Timetable: TSaveDialog
+  object SaveDialogTimetable: TSaveDialog
     FileName = 'Timetable'
     Filter = 'HTML файл|*.html|Таблица Excel|*.xls'
     left = 153

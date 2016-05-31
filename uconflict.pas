@@ -10,8 +10,7 @@ uses
 
 type
 
-   TConflictType = (ctGroupInDiffClassesAtSameTime = 0, ctTeacherInDiffClassesAtSameTime = 1, ctSmthELse = 2);
-
+  TConflictType = (ctGroupInDiffClassesAtSameTime = 0, ctTeacherInDiffClassesAtSameTime = 1, ctSmthELse = 2);
 
   TConflictRecord = record
     FFields: TStringList;
@@ -36,6 +35,7 @@ type
   TIDS = array of Integer;
 
   TMultiplicity = array of Integer;
+
   { TConlfictsForm }
 
   TConlfictsForm = class(TForm)
@@ -48,7 +48,7 @@ type
     FCFMultiplicity: TMultiplicity;
     FCFInform: TConflictInformationArray;
   public
-    procedure CalculateConflic(AParams: array of string; AType: TConflictType);
+    procedure CalculateConflic(AParams: array of string; AConflictParams: array of string; AType: TConflictType);
     function CreateConfclitRecord(AStrL: TStringList; AType: TConflictType): TConflictRecord;
     procedure FillTree;
     procedure AddConflictNode(var i: Integer; var j: Integer;
@@ -76,12 +76,11 @@ implementation
 
 procedure TConlfictsForm.FormCreate(Sender: TObject);
 begin
-  ShowMessage(IntToStr(GetFieldIndex('LESSON_ID')));
-  CalculateConflic(['TEACHER_ID', 'WEEKDAY_ID', 'LESSON_TIME_ID', 'LESSON_ID'],
+  {CalculateConflic(['TEACHER_ID', 'WEEKDAY_ID', 'LESSON_TIME_ID', 'LESSON_ID'],
     ctTeacherInDiffClassesAtSameTime);
   CalculateConflic(['GROUP_ID', 'WEEKDAY_ID', 'LESSON_TIME_ID', 'LESSON_ID'],
-    ctGroupInDiffClassesAtSameTime);
-  FillTree;
+    ctGroupInDiffClassesAtSameTime);}
+  //FillTree;
 end;
 
 procedure TConlfictsForm.TreeViewDblClick(Sender: TObject);
@@ -101,7 +100,7 @@ begin
 end;
 
 procedure TConlfictsForm.CalculateConflic(AParams: array of string;
-  AType: TConflictType);
+  AConflictParams: array of string; AType: TConflictType);
 var
   q: TSQLQuery;
   i, sum, param1, param2, param3, param4: integer;
@@ -115,7 +114,7 @@ begin
   q.DataBase := DataModule1.IBConnection1;
   s := '';
   s += BuildSelectPart(High(MetaData.FTables));
-  s += ' ORDER BY ' + Format('%s, %s, %s', [AParams[0], AParams[1], AParams[2]]);
+  s += ' ORDER BY ' + Format('%s, %s, %s, %s', [AParams[0], AParams[1], AParams[2], AParams[3]]);
   q.Close;
   param1 := GetFieldIndex(AParams[0]);
   param2 := GetFieldIndex(AParams[1]);
@@ -174,17 +173,6 @@ begin
           sl[i] := q.FieldByName(q.FieldDefs.Items[i].DisplayName).AsString;
       q.Next;
     end;
-  if FCFCount <> 0 then
-    begin
-      SetLength(FCFMultiplicity, Length(FCFMultiplicity) + 1);
-      FCFMultiplicity[High(FCFMultiplicity)] := FCFCount;
-      FCFCount := 0;
-    end;
-  ShowMessage(IntToStr(Length(FRecordsInConflic)));
-  sum:= 0;
-  for i := 0 to High(FCFMultiplicity) do
-    sum += FCFMultiplicity[i];
-  ShowMessage(IntToStr(sum));
 end;
 
 function TConlfictsForm.CreateConfclitRecord(AStrL: TStringList;
@@ -213,8 +201,6 @@ begin
   AddConflictNode(i, j, k, ctGroupInDiffClassesAtSameTime, RN, 'Group in Differen Classes at the same time',
     GetFieldIndex('GROUP_ID') - 1, GetFieldIndex('WEEKDAY_ID') - 1,
     GetFieldIndex('LESSON_TIME_ID') - 1);
-
-
 end;
 
 procedure TConlfictsForm.AddConflictNode(var i: Integer; var j: Integer;
@@ -357,8 +343,6 @@ begin
             Result += 1;
             Continue;
         end;
-      //ShowMessage(MetaData.FTables[tmp].FRealName);
-      //ShowMessage(IntToStr(t.FFieldCount) + ' ' + IntToStr(t.FFields[i].FRefTableInd));
       if t.FFields[i].FRealName = AField then
         Break;
       Result += MetaData.FTables[t.FFields[i].FRefTableInd].FFieldCount - 1;
