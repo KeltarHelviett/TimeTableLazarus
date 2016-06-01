@@ -102,7 +102,7 @@ type
     FPrevSelectedRow: integer;
     FDragId: integer;
     FDragCell: TPoint;
-    FConflictIDS: TIDS;
+
     FConflictCells: array of array of Boolean;
     FConflictRecords: TConflictRecords;
     FMultiplicity: TMultiplicity;
@@ -124,7 +124,6 @@ type
     procedure AddBtnClick;
     procedure GetRecordsInConflict;
     procedure CalculateConflictCells;
-    function BinSearch(var a: TIDS; n: integer): Boolean;
     procedure SetSaveDialogFilters;
     procedure SetTableStyle(var AText: string);
     procedure OpenConflict();
@@ -164,7 +163,7 @@ begin
   FHeightDelta := Self.Height - DrawGrid.Height;
   FFilterList := TFilterList.Create(FiltersScrollBox, High(MetaData.FTables), @OnFilterChange);
   GetCheckBoxes;
-  //GetRecordsInConflict;
+  GetRecordsInConflict;
   Notifier.Subscribe(ApplyBtn.OnClick);
   ApplyBtn.Click;
 end;
@@ -834,7 +833,7 @@ var
   pup: TPopupMenu;
   m: TMenuItem;
 begin
-  b := FButtonLists[DrawGrid.Col - 1][DrawGrid.Row - 1].FButtons[AIndex];
+ { b := FButtonLists[DrawGrid.Col - 1][DrawGrid.Row - 1].FButtons[AIndex];
   FCurConflictID := b.FID;
   for i := 0 to High(FConflictRecords) do
     if b.FID = FConflictRecords[i].FID then
@@ -862,7 +861,7 @@ begin
       m.OnClick := @PopUpMenuClick;
       pup.Items.Add(m);
     end;
-   pup.PopUp;
+   pup.PopUp; }
 end;
 
 procedure TTimeTableForm.AddBtnClick;
@@ -880,9 +879,9 @@ var
   cff: TConlfictsForm;
 begin
   cff := TConlfictsForm.Create(Self);
-  FConflictIDS := cff.ShareConflictIDs();
+  {FConflictIDS := cff.ShareConflictIDs();
   FMultiplicity := cff.ShareMultiplicity();
-  FConflictRecords := cff.ShareConflictRecords();
+  FConflictRecords := cff.ShareConflictRecords();}
   cff.Free;
 end;
 
@@ -894,23 +893,6 @@ begin
   SetLength(FConflictCells, Length(FTopHeaders));
   for i := 0 to High(FConflictCells) do
     SetLength(FConflictCells[i], Length(FLeftHeaders));
-end;
-
-function TTimeTableForm.BinSearch(var a: TIDS; n: integer): Boolean;
-var
-  l, r, mid: Integer;
-begin
- { Result := False;
-  l := Low(a);
-  r := High(a) + 1;
-  while l < (r - 1) do
-    begin
-      mid := (l + r) div 2;
-      if a[mid] > n then r := mid
-      else l := mid;
-    end;
-  if a[l] = n then Result := True; }
-  Result := false;
 end;
 
 procedure TTimeTableForm.SetSaveDialogFilters;
@@ -940,7 +922,7 @@ var
   cftype: TConflictType;
   t: TTableForm;
 begin
-  sum := 0; s := '';
+ { sum := 0; s := '';
   tg := (Sender as TMenuItem).Tag;
   case tg of
     0 : cftype := ctTeacherInDiffClassesAtSameTime;
@@ -964,7 +946,7 @@ begin
     s += ' Timetable.id = '  + IntToStr(FConflictRecords[j].FID) + ' OR ';
   Delete(s, Length(s) - 3, 4);
   t := TTableForm.Create(Self, s, FFilterList);
-  t.Show;
+  t.Show;     }
 end;
 
 procedure TTimeTableForm.GetCellValuesOptim;

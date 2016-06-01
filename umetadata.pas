@@ -8,7 +8,7 @@ uses
   Classes, SysUtils;
 
 type
-  TField = record
+  TTableField = record
     FRealName: string;
     FDisplayName: string;
     FRefTableName: string;
@@ -20,7 +20,7 @@ type
   TTable = record
     FRealName: string;
     FDisplayName: string;
-    FFields: array of TField;
+    FFields: array of TTableField;
     FFieldCount: Integer;
   end;
 
