@@ -91,6 +91,7 @@ initialization
       AddTable('GROUPS','Группы');
       AddField(FTables[High(FTables)], 'ID', 'ID', True);
       AddField(FTables[High(FTables)], 'NAME', 'Имя Группы', True);
+      AddField(FTables[High(FTables)], 'STUDENT_NUMBER', 'Кол-во Учащихся', True);
       AddTable('LESSONS','Предметы');
       AddField(FTables[High(FTables)], 'ID', 'ID', True);
       AddField(FTables[High(FTables)], 'NAME', 'Название Предмета', True);
@@ -102,6 +103,7 @@ initialization
       AddTable('CLASSROOMS','Аудитории');
       AddField(FTables[High(FTables)], 'ID', 'ID', True);
       AddField(FTables[High(FTables)], 'NAME', 'Номер Аудитории', True);
+      AddField(FTables[High(FTables)], 'CAPACITY', 'Вместимость Аудитории', True);
       AddTable('LESSON_TIMES','Время занятий');
       AddField(FTables[High(FTables)], 'ID', 'ID', True);
       AddField(FTables[High(FTables)], 'BEGIN_', 'Начало', True);

@@ -12,9 +12,9 @@ object DataModule1: TDataModule1
     top = 8
   end
   object IBConnection1: TIBConnection
-    Connected = True
+    Connected = False
     LoginPrompt = False
-    DatabaseName = 'D:\SHEDULET.FDB'
+    DatabaseName = 'D:\NEWSHEDULE.FDB'
     KeepConnection = False
     Password = 'masterkey'
     Transaction = SQLTransaction1

@@ -11,7 +11,7 @@ uses
 type
 
   TConflictType = (ctGroupMultipleLessons, ctGroupMultipleClassrooms,
-    ctGroupMultipleTeacher, ctTeacherMultipleClassrooms);
+    ctGroupMultipleTeacher, ctTeacherMultipleClassrooms, ctClassroomOverflow);
 
   TConflictRecord = record
     FFields: TStringList;
@@ -43,14 +43,16 @@ type
   public
     procedure FillTree;
     function CreateConfclitRecord(AStrL: TStringList; AType: TConflictType): TConflictRecord;
-
+    procedure RecalculateConficts;
     procedure AddConflictNode(var i: Integer; AType: TConflictType; ARootNode: TTreeNode; ACaption: String);
     function FindeRootNode(ACaption: String):TTreeNode;
     function GetRecordText(index: integer): String;
     function GetRecordText(index: integer; indexes: array of integer): String;
     function GetFieldIndex(AField: String): Integer;
     procedure CalculateConflict(AType: TConflictType; AEQParam, AUnEQParam: array of string);
+    procedure CalculateClassroomOverflowConflict;
     function CreateConflictRecordFromQuery(ABegin: Integer; AQuery: TSQLQuery): TConflictRecord;
+
   end;
 
 var
@@ -76,6 +78,7 @@ begin
   CalculateConflict(ctTeacherMultipleClassrooms,
     ['TEACHER_ID', 'WEEKDAY_ID','LESSON_TIME_ID'],
     ['CLASSROOM_ID']);
+  CalculateClassroomOverflowConflict;
 
   FillTree;
 end;
@@ -108,6 +111,22 @@ begin
     Result.FFields.Append(AStrL[i]);
 end;
 
+procedure TConlfictsForm.RecalculateConficts;
+begin
+  CalculateConflict(ctGroupMultipleLessons,
+    ['GROUP_ID', 'WEEKDAY_ID','LESSON_TIME_ID'],
+    ['LESSON_ID']);
+  CalculateConflict(ctGroupMultipleClassrooms,
+    ['GROUP_ID', 'WEEKDAY_ID','LESSON_TIME_ID'],
+    ['CLASSROOM_ID']);
+  CalculateConflict(ctGroupMultipleTeacher,
+    ['GROUP_ID', 'WEEKDAY_ID','LESSON_TIME_ID'],
+    ['TEACHER_ID']);
+  CalculateConflict(ctTeacherMultipleClassrooms,
+    ['TEACHER_ID', 'WEEKDAY_ID','LESSON_TIME_ID'],
+    ['CLASSROOM_ID']);
+end;
+
 procedure TConlfictsForm.FillTree;
 var
   RN, CurCf, CurCFRecords: TTreeNode;
@@ -119,6 +138,7 @@ begin
   AddConflictNode(i, ctGroupMultipleClassrooms, RN, 'Group Mult Classrooms');
   AddConflictNode(i, ctGroupMultipleTeacher, RN, 'Group Mult Teachers');
   AddConflictNode(i, ctTeacherMultipleClassrooms, RN, 'Teacher Mult Classrooms');
+  AddConflictNode(i, ctClassroomOverflow, RN, 'Classroom Overflow');
 end;
 
 procedure TConlfictsForm.AddConflictNode(var i: Integer; AType: TConflictType;
@@ -338,6 +358,112 @@ begin
     end;
   q.Free;
   qpred.Free;
+end;
+
+procedure TConlfictsForm.CalculateClassroomOverflowConflict;
+var
+  q, qpred: TSQLQuery;
+  i, j, k, sum, last, cfCount: Integer;
+  s: array of array of string;
+  tmp, orderList: string;
+  paramList: array[0..2] of string;
+  pred: array [0..2] of integer;
+  str: string;
+  isCurrentSet, isConflict: Boolean;
+begin
+  orderList := '';
+  cfCount := 1;
+  isCurrentSet := False;
+  q := TSQLQuery.Create(Self);
+  q.DataBase := DataModule1.IBConnection1;
+  qpred := TSQLQuery.Create(Self);
+  qpred.DataBase := DataModule1.IBConnection1;
+  tmp := BuildSelectPart(High(MetaData.FTables));
+  Delete(tmp, 1, 7);
+  paramList[0] := 'LESSON_ID';
+  paramList[1] := 'WEEKDAY_ID';
+  paramList[2] := 'LESSON_TIME_ID';
+  for i := 0 to High(paramList) do
+    orderList += 'TIMETABLE.' + paramList[i] + ', ';
+  str := 'SELECT ' + orderList + tmp + ' ORDER BY ' + orderList;
+  Delete(str, Length(str) - 1, 2);
+  q.SQL.Text := str;
+  qpred.SQL.Text := str;
+  q.SQL.SaveToFile('str.txt');
+  q.Open;
+  qpred.Open;
+  for i := 0 to High(pred) do
+    pred[i] := qpred.FieldByName(paramList[i]).AsInteger;
+  sum := qpred.FieldByName('STUDENT_NUMBER').AsInteger;
+  q.Next;
+  while (not(q.EOF)) do
+    begin
+      isConflict := True;
+      for i := 0 to High(pred) do
+        if (pred[i] <> q.FieldByName(paramList[i]).AsInteger) then
+          begin
+            isConflict := False;
+            isCurrentSet := False;
+            Break;
+          end;
+      if isConflict then
+        begin
+          sum += q.FieldByName('STUDENT_NUMBER').AsInteger;
+          Inc(cfCount);
+        if (isCurrentSet) then
+          with FConflictSets[High(FConflictSets)] do
+            begin
+              SetLength(FConflictRecords, Length(FConflictRecords) + 1);
+              last := High(FConflictRecords);
+              FConflictRecords[last] :=
+                CreateConflictRecordFromQuery(Length(pred), q);
+            end
+        else
+          begin
+            SetLength(FConflictSets, Length(FConflictSets) + 1);
+            with FConflictSets[High(FConflictSets)] do
+              begin
+                SetLength(FConflictRecords, 2);
+                FConflictRecords[0] :=
+                  CreateConflictRecordFromQuery(Length(pred), qpred);
+                FConflictRecords[1] :=
+                  CreateConflictRecordFromQuery(Length(pred), q);
+                FConflictType := ctClassroomOverflow;
+                isCurrentSet := True;
+              end;
+          end;
+        end
+      else
+        begin
+          if cfCount > 1 then
+            begin
+              if (sum < qpred.FieldByName('CAPACITY').AsInteger) then
+                SetLength(FConflictSets, Length(FConflictSets) - 1);
+              cfCount := 1;
+              sum := q.FieldByName('STUDENT_NUMBER').AsInteger;
+            end
+          else
+            begin
+              SetLength(FConflictSets, Length(FConflictSets) + 1);
+              if (sum > qpred.FieldByName('CAPACITY').AsInteger) then
+                with FConflictSets[High(FConflictSets)] do
+                  begin
+                    SetLength(FConflictRecords, 1);
+                    FConflictRecords[0] :=
+                      CreateConflictRecordFromQuery(Length(pred), qpred);
+                    FConflictType := ctClassroomOverflow;
+                  end;
+              sum := q.FieldByName('STUDENT_NUMBER').AsInteger;
+            end;
+        end;
+      qpred.Next;
+       for i := 0 to High(pred) do
+         pred[i] := qpred.FieldByName(paramList[i]).AsInteger;
+
+      q.Next;
+    end;
+  qpred.Free;
+  q.Free;
 end;
 
 function TConlfictsForm.CreateConflictRecordFromQuery(ABegin: Integer;
